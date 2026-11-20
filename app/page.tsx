@@ -1,8 +1,19 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { api, formatINR, getTenantSlug, setTenantSlug, toPaise, toRupees } from "../lib/api";
 import { Language, t } from "../lib/i18n";
+import {
+  BlurText,
+  AnimatedContent,
+  SpotlightCard,
+  CountUp,
+  GlareHover,
+  ClickSpark,
+  ShinyText,
+  Squares,
+} from "../components/react-bits";
 
 type Tab =
   | "dashboard"
@@ -34,9 +45,10 @@ export default function FinSmartApp() {
   useEffect(() => {
     const savedToken = sessionStorage.getItem("finsmart_token");
     const savedUser = sessionStorage.getItem("finsmart_user");
-    const savedTenant = sessionStorage.getItem("finsmart_tenant") || "public";
+    // Ensure public tenant is always active for the general public
+    sessionStorage.setItem("finsmart_tenant", "public");
+    setTenant("public");
 
-    setTenant(savedTenant);
     if (savedToken && savedUser) {
       try {
         const u = JSON.parse(savedUser);
@@ -110,64 +122,80 @@ export default function FinSmartApp() {
         <AuthView tenant={tenant} language={language} onLoginSuccess={handleLoginSuccess} />
       ) : (
         <>
-          {/* Navigation Bar */}
-          <nav className="nav-tabs">
-            <button
-              className={`nav-tab-btn ${currentTab === "dashboard" ? "active" : ""}`}
-              onClick={() => setCurrentTab("dashboard")}
-            >
-              {t(language, "navDashboard")}
-            </button>
-            <button
-              className={`nav-tab-btn ${currentTab === "budgets" ? "active" : ""}`}
-              onClick={() => setCurrentTab("budgets")}
-            >
-              {t(language, "navBudgets")}
-            </button>
-            <button
-              className={`nav-tab-btn ${currentTab === "goals" ? "active" : ""}`}
-              onClick={() => setCurrentTab("goals")}
-            >
-              {t(language, "navGoals")}
-            </button>
-            <button
-              className={`nav-tab-btn ${currentTab === "schemes" ? "active" : ""}`}
-              onClick={() => setCurrentTab("schemes")}
-            >
-              {t(language, "navSchemes")}
-            </button>
-            <button
-              className={`nav-tab-btn ${currentTab === "ai_assistant" ? "active" : ""}`}
-              onClick={() => setCurrentTab("ai_assistant")}
-            >
-              {t(language, "navAI")}
-            </button>
-            <button
-              className={`nav-tab-btn ${currentTab === "calculators" ? "active" : ""}`}
-              onClick={() => setCurrentTab("calculators")}
-            >
-              {t(language, "navCalculators")}
-            </button>
-            <button
-              className={`nav-tab-btn ${currentTab === "learning" ? "active" : ""}`}
-              onClick={() => setCurrentTab("learning")}
-            >
-              {t(language, "navLearn")}
-            </button>
-            <button
-              className={`nav-tab-btn ${currentTab === "profile" ? "active" : ""}`}
-              onClick={() => setCurrentTab("profile")}
-            >
-              {t(language, "navProfile")}
-            </button>
-            {(session.role === "college_admin" || session.role === "admin") && (
-              <button
-                className={`nav-tab-btn ${currentTab === "admin" ? "active" : ""}`}
-                onClick={() => setCurrentTab("admin")}
-              >
-                {t(language, "navAdmin")}
-              </button>
-            )}
+          {/* Navigation Bar with Framer Motion Sliding Pill & Overflow Safeguard */}
+          <nav
+            className="nav-tabs"
+            style={{
+              position: "relative",
+              display: "flex",
+              gap: "6px",
+              overflowX: "auto",
+              paddingBottom: "8px",
+              marginBottom: "24px",
+              whiteSpace: "nowrap",
+              borderBottom: "1px solid var(--border-light)",
+            }}
+          >
+            {[
+              { id: "dashboard", label: t(language, "navDashboard") },
+              { id: "budgets", label: t(language, "navBudgets") },
+              { id: "goals", label: t(language, "navGoals") },
+              { id: "schemes", label: t(language, "navSchemes") },
+              {
+                id: "ai_assistant",
+                label: (
+                  <ShinyText speed={3.5}>
+                    ✨ {t(language, "navAI")}
+                  </ShinyText>
+                ),
+              },
+              { id: "calculators", label: t(language, "navCalculators") },
+              { id: "learning", label: t(language, "navLearn") },
+              { id: "profile", label: t(language, "navProfile") },
+              ...((session.role === "college_admin" || session.role === "admin")
+                ? [{ id: "admin", label: t(language, "navAdmin") }]
+                : []),
+            ].map((tab) => {
+              const isActive = currentTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  className={`nav-tab-btn ${isActive ? "active" : ""}`}
+                  onClick={() => setCurrentTab(tab.id as Tab)}
+                  style={{
+                    position: "relative",
+                    background: "transparent",
+                    color: isActive ? "#047857" : "var(--text-muted)",
+                    fontWeight: isActive ? 700 : 600,
+                    padding: "9px 16px",
+                    borderRadius: "10px",
+                    border: "none",
+                    cursor: "pointer",
+                    zIndex: 1,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    flexShrink: 0,
+                  }}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTab"
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        backgroundColor: "#dcfce7",
+                        borderRadius: "10px",
+                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                        zIndex: -1,
+                      }}
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  {tab.label}
+                </button>
+              );
+            })}
           </nav>
 
           {/* Active Tab View */}
@@ -253,120 +281,195 @@ function AuthView({
   };
 
   return (
-    <div style={{ maxWidth: "460px", margin: "40px auto" }}>
-      <div className="card" style={{ padding: "30px" }}>
-        <h2 style={{ fontSize: "1.4rem", fontWeight: "800", marginBottom: "6px" }}>
-          {mode === "login" ? t(language, "welcomeBack") : t(language, "createAccount")}
-        </h2>
-        <p className="card-description" style={{ marginBottom: "20px" }}>
-          {mode === "login" ? t(language, "signInSubtitle") : t(language, "registerSubtitle")}
-        </p>
+    <div style={{ position: "relative", minHeight: "520px", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 0" }}>
+      {/* Subtle light-mode animated background with soft emerald grid */}
+      <Squares
+        direction="diagonal"
+        speed={0.35}
+        squareSize={38}
+        borderColor="rgba(16, 185, 129, 0.08)"
+        hoverFillColor="rgba(16, 185, 129, 0.05)"
+      />
 
-        {error && (
-          <div className="alert-banner alert-danger" role="alert">
-            ⚠️ {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          {mode === "register" && (
-            <>
-              <div className="form-group" style={{ marginBottom: "14px" }}>
-                <label className="form-label">{t(language, "fullName")}</label>
-                <input
-                  required
-                  placeholder="e.g. Ramesh Kumar"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                />
-              </div>
-
-              <div className="form-group" style={{ marginBottom: "14px" }}>
-                <label className="form-label">{t(language, "role")}</label>
-                <select value={role} onChange={(e) => setRole(e.target.value)}>
-                  <option value="student">{t(language, "student")}</option>
-                  <option value="faculty">{t(language, "faculty")}</option>
-                  <option value="admin">{t(language, "admin")}</option>
-                </select>
-              </div>
-            </>
-          )}
-
-          <div className="form-group" style={{ marginBottom: "14px" }}>
-            <label className="form-label">{t(language, "email")}</label>
-            <input
-              type="email"
-              required
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+      <AnimatedContent
+        distance={28}
+        direction="vertical"
+        duration={0.45}
+        style={{ width: "100%", maxWidth: "460px", position: "relative", zIndex: 1 }}
+      >
+        <div
+          className="glass-card"
+          style={{
+            padding: "36px 32px",
+            borderRadius: "16px",
+          }}
+        >
+          <div style={{ marginBottom: "8px" }}>
+            <BlurText
+              text={mode === "login" ? t(language, "welcomeBack") : t(language, "createAccount")}
+              delay={35}
+              style={{ fontSize: "1.5rem", fontWeight: "800", color: "#0f172a" }}
             />
           </div>
+          <p className="card-description" style={{ marginBottom: "22px", color: "var(--text-muted)" }}>
+            {mode === "login" ? t(language, "signInSubtitle") : t(language, "registerSubtitle")}
+          </p>
 
-          <div className="form-group" style={{ marginBottom: "16px" }}>
-            <label className="form-label">{t(language, "password")}</label>
-            <input
-              type="password"
-              required
-              minLength={8}
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-
-          {mode === "register" && (
-            <div style={{ marginBottom: "18px", display: "flex", gap: "10px", alignItems: "flex-start" }}>
-              <input
-                type="checkbox"
-                id="dpdp-consent"
-                checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
-                style={{ width: "18px", height: "18px", marginTop: "2px", flexShrink: 0 }}
-              />
-              <label htmlFor="dpdp-consent" style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>
-                {t(language, "dpdpConsent")}
-              </label>
+          {error && (
+            <div className="alert-banner alert-danger" role="alert" style={{ marginBottom: "16px" }}>
+              ⚠️ {error}
             </div>
           )}
 
-          <button type="submit" className="btn btn-primary" style={{ width: "100%" }} disabled={loading}>
-            {loading ? "..." : mode === "login" ? t(language, "signInBtn") : t(language, "registerBtn")}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit}>
+            {mode === "register" && (
+              <>
+                <div className="form-group" style={{ marginBottom: "14px" }}>
+                  <label className="form-label">{t(language, "fullName")}</label>
+                  <input
+                    required
+                    className="fin-input"
+                    placeholder="e.g. Ramesh Kumar"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                  />
+                </div>
 
-        <div style={{ marginTop: "18px", textAlign: "center", fontSize: "0.88rem" }}>
-          {mode === "login" ? (
-            <p>
-              {t(language, "newHere")}{" "}
+                <div className="form-group" style={{ marginBottom: "14px" }}>
+                  <label className="form-label">{t(language, "role")}</label>
+                  <select className="fin-input" value={role} onChange={(e) => setRole(e.target.value)}>
+                    <option value="student">{t(language, "student")}</option>
+                    <option value="faculty">{t(language, "faculty")}</option>
+                    <option value="admin">{t(language, "admin")}</option>
+                  </select>
+                </div>
+              </>
+            )}
+
+            <div className="form-group" style={{ marginBottom: "14px" }}>
+              <label className="form-label">{t(language, "email")}</label>
+              <input
+                type="email"
+                required
+                className="fin-input"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: "18px" }}>
+              <label className="form-label">{t(language, "password")}</label>
+              <input
+                type="password"
+                required
+                minLength={8}
+                className="fin-input"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+
+            {mode === "register" && (
+              <div style={{ marginBottom: "18px", display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                <input
+                  type="checkbox"
+                  id="dpdp-consent"
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                  style={{ width: "18px", height: "18px", marginTop: "2px", flexShrink: 0 }}
+                />
+                <label htmlFor="dpdp-consent" style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>
+                  {t(language, "dpdpConsent")}
+                </label>
+              </div>
+            )}
+
+            <GlareHover
+              glareColor="#ffffff"
+              glareOpacity={0.25}
+              borderRadius="10px"
+              style={{ width: "100%", display: "block" }}
+            >
               <button
-                type="button"
-                style={{ background: "none", border: "none", color: "var(--primary)", fontWeight: "700", cursor: "pointer" }}
-                onClick={() => {
-                  setMode("register");
-                  setError("");
+                type="submit"
+                className="btn btn-primary"
+                style={{
+                  width: "100%",
+                  minHeight: "46px",
+                  fontSize: "0.95rem",
+                  fontWeight: 700,
+                  boxShadow: "0 4px 14px rgba(16, 185, 129, 0.35)",
                 }}
+                disabled={loading}
               >
-                {t(language, "createAccountLink")}
+                {loading ? "..." : mode === "login" ? t(language, "signInBtn") : t(language, "registerBtn")}
               </button>
-            </p>
-          ) : (
-            <p>
-              {t(language, "haveAccount")}{" "}
-              <button
-                type="button"
-                style={{ background: "none", border: "none", color: "var(--primary)", fontWeight: "700", cursor: "pointer" }}
-                onClick={() => {
-                  setMode("login");
-                  setError("");
-                }}
-              >
-                {t(language, "signInLink")}
-              </button>
-            </p>
-          )}
+            </GlareHover>
+
+            {mode === "login" && (
+              <div style={{ marginTop: "12px", textAlign: "center" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail("vivekshaiva9945@gmail.com");
+                    setPassword("vivek123");
+                  }}
+                  style={{
+                    background: "#f0fdf4",
+                    border: "1px dashed #10b981",
+                    color: "#047857",
+                    borderRadius: "8px",
+                    padding: "6px 14px",
+                    fontSize: "0.82rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  ⚡ Fill Demo Login (vivekshaiva9945@gmail.com)
+                </button>
+              </div>
+            )}
+          </form>
+
+          <div style={{ marginTop: "20px", textAlign: "center", fontSize: "0.88rem" }}>
+            {mode === "login" ? (
+              <p>
+                {t(language, "newHere")}{" "}
+                <button
+                  type="button"
+                  style={{ background: "none", border: "none", color: "var(--primary)", fontWeight: "700", cursor: "pointer" }}
+                  onClick={() => {
+                    setMode("register");
+                    setError("");
+                  }}
+                >
+                  {t(language, "createAccountLink")}
+                </button>
+              </p>
+            ) : (
+              <p>
+                {t(language, "haveAccount")}{" "}
+                <button
+                  type="button"
+                  style={{ background: "none", border: "none", color: "var(--primary)", fontWeight: "700", cursor: "pointer" }}
+                  onClick={() => {
+                    setMode("login");
+                    setError("");
+                  }}
+                >
+                  {t(language, "signInLink")}
+                </button>
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      </AnimatedContent>
     </div>
   );
 }
@@ -396,7 +499,7 @@ function DashboardView({ session, language }: { session: UserSession; language: 
       setLoading(true);
       const [sumRes, txRes, accRes, budRes] = await Promise.all([
         api("/transactions/summary"),
-        api("/transactions?limit=25"),
+        api("/transactions/?limit=25"),
         api("/accounts/"),
         api("/budgets/status"),
       ]);
@@ -473,142 +576,235 @@ function DashboardView({ session, language }: { session: UserSession; language: 
 
       {error && <div className="alert-banner alert-danger">⚠️ {error}</div>}
 
-      {/* 4-Metric Overview Cards */}
+      {/* 4-Metric Overview Cards with Staggered Entrance, Spotlight, and CountUp */}
       <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-label">{t(language, "netBalance")}</div>
-          <div className="stat-value">{formatINR(summary ? summary.balance_minor : 0)}</div>
-          <div className="stat-subtext">{t(language, "cumulativeCashflow")}</div>
-        </div>
+        <AnimatedContent distance={20} delay={0} duration={0.35}>
+          <SpotlightCard
+            spotlightColor="rgba(16, 185, 129, 0.12)"
+            className="stat-card"
+            style={{ borderRadius: "14px", height: "100%" }}
+          >
+            <div className="stat-label">{t(language, "netBalance")}</div>
+            <div className="stat-value">
+              <CountUp
+                to={toRupees(summary ? summary.balance_minor : 0)}
+                prefix="₹"
+                decimals={2}
+                duration={0.6}
+              />
+            </div>
+            <div className="stat-subtext">{t(language, "cumulativeCashflow")}</div>
+          </SpotlightCard>
+        </AnimatedContent>
 
-        <div className="stat-card">
-          <div className="stat-label">{t(language, "monthlyIncome")}</div>
-          <div className="stat-value" style={{ color: "var(--color-success)" }}>
-            +{formatINR(summary ? summary.income_minor : 0)}
-          </div>
-          <div className="stat-subtext positive">{t(language, "totalCredits")}</div>
-        </div>
+        <AnimatedContent distance={20} delay={0.08} duration={0.35}>
+          <SpotlightCard
+            spotlightColor="rgba(16, 185, 129, 0.12)"
+            className="stat-card"
+            style={{ borderRadius: "14px", height: "100%" }}
+          >
+            <div className="stat-label">{t(language, "monthlyIncome")}</div>
+            <div className="stat-value" style={{ color: "var(--color-success)" }}>
+              <CountUp
+                to={toRupees(summary ? summary.income_minor : 0)}
+                prefix="+₹"
+                decimals={2}
+                duration={0.6}
+              />
+            </div>
+            <div className="stat-subtext positive">{t(language, "totalCredits")}</div>
+          </SpotlightCard>
+        </AnimatedContent>
 
-        <div className="stat-card">
-          <div className="stat-label">{t(language, "monthlyExpenses")}</div>
-          <div className="stat-value" style={{ color: "var(--color-danger)" }}>
-            -{formatINR(summary ? summary.expense_minor : 0)}
-          </div>
-          <div className="stat-subtext negative">{t(language, "totalDebits")}</div>
-        </div>
+        <AnimatedContent distance={20} delay={0.16} duration={0.35}>
+          <SpotlightCard
+            spotlightColor="rgba(16, 185, 129, 0.12)"
+            className="stat-card"
+            style={{ borderRadius: "14px", height: "100%" }}
+          >
+            <div className="stat-label">{t(language, "monthlyExpenses")}</div>
+            <div className="stat-value" style={{ color: "var(--color-danger)" }}>
+              <CountUp
+                to={toRupees(summary ? summary.expense_minor : 0)}
+                prefix="-₹"
+                decimals={2}
+                duration={0.6}
+              />
+            </div>
+            <div className="stat-subtext negative">{t(language, "totalDebits")}</div>
+          </SpotlightCard>
+        </AnimatedContent>
 
-        <div className="stat-card">
-          <div className="stat-label">{t(language, "savingsRate")}</div>
-          <div className="stat-value">{summary ? summary.savings_rate_pct : 0}%</div>
-          <div className={`stat-subtext ${(summary?.savings_rate_pct || 0) >= 20 ? "positive" : "warning"}`}>
-            {(summary?.savings_rate_pct || 0) >= 20 ? t(language, "healthySavings") : t(language, "targetSavings")}
-          </div>
-        </div>
+        <AnimatedContent distance={20} delay={0.24} duration={0.35}>
+          <SpotlightCard
+            spotlightColor="rgba(16, 185, 129, 0.12)"
+            className="stat-card"
+            style={{ borderRadius: "14px", height: "100%" }}
+          >
+            <div className="stat-label">{t(language, "savingsRate")}</div>
+            <div className="stat-value">
+              <CountUp
+                to={summary ? summary.savings_rate_pct : 0}
+                suffix="%"
+                decimals={1}
+                duration={0.6}
+              />
+            </div>
+            <div className={`stat-subtext ${(summary?.savings_rate_pct || 0) >= 20 ? "positive" : "warning"}`}>
+              {(summary?.savings_rate_pct || 0) >= 20 ? t(language, "healthySavings") : t(language, "targetSavings")}
+            </div>
+          </SpotlightCard>
+        </AnimatedContent>
       </div>
 
-      {/* Main Grid: Add Transaction & Category Breakdown */}
+      {/* Main Grid: Add Transaction & Category Breakdown with Animated Entrance & ClickSpark */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px" }}>
         {/* Quick Add Transaction Card */}
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <div className="card-title">{t(language, "recordTransaction")}</div>
-              <div className="card-description">{t(language, "recordSubtitle")}</div>
+        <AnimatedContent distance={24} delay={0.32} duration={0.4}>
+          <div className="card" style={{ height: "100%" }}>
+            <div className="card-header">
+              <div>
+                <div className="card-title">{t(language, "recordTransaction")}</div>
+                <div className="card-description">{t(language, "recordSubtitle")}</div>
+              </div>
             </div>
-          </div>
 
-          <form onSubmit={handleAddTransaction}>
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">{t(language, "amount")}</label>
+            <form onSubmit={handleAddTransaction}>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label className="form-label">{t(language, "amount")}</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    className="fin-input"
+                    placeholder="e.g. 250.00"
+                    value={amountRupees}
+                    onChange={(e) => setAmountRupees(e.target.value)}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">{t(language, "type")}</label>
+                  <select className="fin-input" value={kind} onChange={(e) => setKind(e.target.value as any)}>
+                    <option value="DEBIT">{t(language, "expense")}</option>
+                    <option value="CREDIT">{t(language, "income")}</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">{t(language, "category")}</label>
+                  <select className="fin-input" value={category} onChange={(e) => setCategory(e.target.value)}>
+                    <option value="food">{t(language, "catFood")}</option>
+                    <option value="education">{t(language, "catEducation")}</option>
+                    <option value="books">{t(language, "catBooks")}</option>
+                    <option value="rent">{t(language, "catRent")}</option>
+                    <option value="travel">{t(language, "catTravel")}</option>
+                    <option value="bills">{t(language, "catBills")}</option>
+                    <option value="stipend">{t(language, "catStipend")}</option>
+                    <option value="salary">{t(language, "catSalary")}</option>
+                    <option value="other">{t(language, "catOther")}</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">{t(language, "paymentMode")}</label>
+                  <select className="fin-input" value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)}>
+                    <option value="UPI">UPI</option>
+                    <option value="CASH">Cash</option>
+                    <option value="BANK">Net Banking</option>
+                    <option value="CARD">Debit / Credit Card</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: "16px" }}>
+                <label className="form-label">{t(language, "noteDescription")}</label>
                 <input
-                  type="number"
-                  step="0.01"
-                  required
-                  placeholder="e.g. 250.00"
-                  value={amountRupees}
-                  onChange={(e) => setAmountRupees(e.target.value)}
+                  className="fin-input"
+                  placeholder="e.g. Books, grocery, etc."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">{t(language, "type")}</label>
-                <select value={kind} onChange={(e) => setKind(e.target.value as any)}>
-                  <option value="DEBIT">{t(language, "expense")}</option>
-                  <option value="CREDIT">{t(language, "income")}</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">{t(language, "category")}</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                  <option value="food">{t(language, "catFood")}</option>
-                  <option value="education">{t(language, "catEducation")}</option>
-                  <option value="books">{t(language, "catBooks")}</option>
-                  <option value="rent">{t(language, "catRent")}</option>
-                  <option value="travel">{t(language, "catTravel")}</option>
-                  <option value="bills">{t(language, "catBills")}</option>
-                  <option value="stipend">{t(language, "catStipend")}</option>
-                  <option value="salary">{t(language, "catSalary")}</option>
-                  <option value="other">{t(language, "catOther")}</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">{t(language, "paymentMode")}</label>
-                <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)}>
-                  <option value="UPI">UPI</option>
-                  <option value="CASH">Cash</option>
-                  <option value="BANK">Net Banking</option>
-                  <option value="CARD">Debit / Credit Card</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="form-group" style={{ marginBottom: "16px" }}>
-              <label className="form-label">{t(language, "noteDescription")}</label>
-              <input
-                placeholder="e.g. Books, grocery, etc."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-
-            <button type="submit" className="btn btn-primary" style={{ width: "100%" }} disabled={submitting}>
-              {submitting ? "..." : t(language, "addTransactionBtn")}
-            </button>
-          </form>
-        </div>
+              <ClickSpark sparkColor="#10b981" sparkCount={12} sparkRadius={36} className="w-full" style={{ width: "100%", display: "block" }}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ width: "100%", fontWeight: 700 }}
+                  disabled={submitting}
+                >
+                  {submitting ? "..." : t(language, "addTransactionBtn")}
+                </button>
+              </ClickSpark>
+            </form>
+          </div>
+        </AnimatedContent>
 
         {/* Category Expense Breakdown */}
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <div className="card-title">{t(language, "spendingBreakdown")}</div>
-              <div className="card-description">{t(language, "monthlyDistribution")}</div>
+        <AnimatedContent distance={24} delay={0.38} duration={0.4}>
+          <div className="card" style={{ height: "100%" }}>
+            <div className="card-header">
+              <div>
+                <div className="card-title">{t(language, "spendingBreakdown")}</div>
+                <div className="card-description">{t(language, "monthlyDistribution")}</div>
+              </div>
             </div>
-          </div>
 
-          {summary && summary.by_category.length > 0 ? (
-            <div>
-              {summary.by_category.map((cat: any) => (
-                <div key={cat.category} style={{ marginBottom: "12px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", fontWeight: "600" }}>
-                    <span style={{ textTransform: "capitalize" }}>{cat.category}</span>
-                    <span>
-                      {formatINR(cat.total_minor)} ({cat.percentage}%)
-                    </span>
+            {summary && summary.by_category.length > 0 ? (
+              <div>
+                {summary.by_category.map((cat: any) => (
+                  <div key={cat.category} style={{ marginBottom: "12px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", fontWeight: "600" }}>
+                      <span style={{ textTransform: "capitalize" }}>{cat.category}</span>
+                      <span>
+                        {formatINR(cat.total_minor)} ({cat.percentage}%)
+                      </span>
+                    </div>
+                    <div className="progress-bar-container" style={{ margin: "4px 0" }}>
+                      <div className="progress-bar-fill progress-ok" style={{ width: `${Math.min(cat.percentage, 100)}%` }} />
+                    </div>
                   </div>
-                  <div className="progress-bar-container" style={{ margin: "4px 0" }}>
-                    <div className="progress-bar-fill progress-ok" style={{ width: `${Math.min(cat.percentage, 100)}%` }} />
-                  </div>
+                ))}
+              </div>
+            ) : (
+              <div
+                className="animate-soft-pulse"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "36px 16px",
+                  textAlign: "center",
+                  background: "var(--bg-subtle)",
+                  borderRadius: "12px",
+                  border: "1px dashed var(--border-light)",
+                }}
+              >
+                <div
+                  style={{
+                    width: "44px",
+                    height: "44px",
+                    borderRadius: "50%",
+                    background: "#dcfce7",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "1.2rem",
+                    marginBottom: "10px",
+                  }}
+                >
+                  📊
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p style={{ color: "var(--text-muted)", fontSize: "0.88rem" }}>{t(language, "noTransactions")}</p>
-          )}
-        </div>
+                <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", fontWeight: 500 }}>
+                  {t(language, "noTransactions")}
+                </p>
+              </div>
+            )}
+          </div>
+        </AnimatedContent>
       </div>
 
       {/* Recent Transactions Ledger Table */}
