@@ -18,18 +18,17 @@ export default function NotFound() {
     >
       <div
         style={{
-          width: "64px",
-          height: "64px",
-          borderRadius: "16px",
-          background: "#10b981",
+          width: "56px",
+          height: "56px",
+          borderRadius: "12px",
+          background: "var(--primary, #047857)",
           color: "white",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "2rem",
-          fontWeight: 900,
+          fontSize: "1.75rem",
+          fontWeight: 700,
           marginBottom: "20px",
-          boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.4)",
         }}
       >
         ₹
@@ -40,39 +39,39 @@ export default function NotFound() {
           display: "inline-block",
           padding: "4px 12px",
           borderRadius: "9999px",
-          background: "#dcfce7",
+          background: "#ecfdf5",
           color: "#065f46",
-          fontSize: "0.85rem",
-          fontWeight: 700,
+          fontSize: "0.8125rem",
+          fontWeight: 600,
           marginBottom: "14px",
-          letterSpacing: "0.05em",
         }}
       >
-        404 • PAGE NOT FOUND
+        404 • Not Found
       </span>
 
       <h1
         style={{
-          fontSize: "2.2rem",
-          fontWeight: 900,
-          letterSpacing: "-0.03em",
+          fontSize: "2rem",
+          fontWeight: 700,
+          letterSpacing: "-0.02em",
           marginBottom: "12px",
           maxWidth: "500px",
+          color: "#0f172a",
         }}
       >
-        Lost in Financial Space?
+        Page Not Found
       </h1>
 
       <p
         style={{
-          fontSize: "1rem",
+          fontSize: "0.9375rem",
           color: "var(--text-muted, #64748b)",
           maxWidth: "460px",
-          lineHeight: 1.6,
+          lineHeight: 1.5,
           marginBottom: "28px",
         }}
       >
-        The page or financial resource you are looking for doesn't exist, was moved, or has an outdated link.
+        The page or financial resource you are looking for does not exist or has been moved.
       </p>
 
       <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
@@ -83,17 +82,17 @@ export default function NotFound() {
             alignItems: "center",
             gap: "8px",
             padding: "12px 24px",
-            background: "#10b981",
+            background: "var(--primary, #047857)",
             color: "white",
-            borderRadius: "10px",
-            fontWeight: 700,
-            fontSize: "0.95rem",
+            borderRadius: "8px",
+            fontWeight: 600,
+            fontSize: "0.9375rem",
             textDecoration: "none",
-            boxShadow: "0 4px 14px rgba(16, 185, 129, 0.35)",
+            minHeight: "48px",
             transition: "all 0.15s ease",
           }}
         >
-          ← Return to FinSmart Home
+          Return to Dashboard
         </Link>
       </div>
 

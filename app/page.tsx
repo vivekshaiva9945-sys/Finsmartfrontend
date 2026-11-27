@@ -4,16 +4,38 @@ import React, { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api, formatINR, getTenantSlug, setTenantSlug, toPaise, toRupees } from "../lib/api";
 import { Language, t } from "../lib/i18n";
+import { CountUp, AnimatedContent } from "../components/react-bits";
 import {
-  BlurText,
-  AnimatedContent,
-  SpotlightCard,
-  CountUp,
-  GlareHover,
-  ClickSpark,
-  ShinyText,
-  Squares,
-} from "../components/react-bits";
+  LayoutDashboard,
+  PieChart,
+  Target,
+  Landmark,
+  Bot,
+  Calculator,
+  ShieldCheck,
+  User,
+  ShieldAlert,
+  Menu,
+  X,
+  Phone,
+  Mail,
+  ArrowDownRight,
+  ArrowUpRight,
+  Trash2,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  Download,
+  AlertTriangle,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
+  FileText,
+  Building2,
+  Calendar,
+  CreditCard,
+  PlusCircle,
+} from "lucide-react";
 
 type Tab =
   | "dashboard"
@@ -126,24 +148,16 @@ export default function FinSmartApp() {
   };
 
   const navItems = [
-    { id: "dashboard", label: t(language, "navDashboard"), icon: "📊" },
-    { id: "budgets", label: t(language, "navBudgets"), icon: "🎯" },
-    { id: "goals", label: t(language, "navGoals"), icon: "🏆" },
-    { id: "schemes", label: t(language, "navSchemes"), icon: "🏛️" },
-    {
-      id: "ai_assistant",
-      label: (
-        <ShinyText speed={3.5}>
-          ✨ {t(language, "navAI")}
-        </ShinyText>
-      ),
-      icon: "✨",
-    },
-    { id: "calculators", label: t(language, "navCalculators"), icon: "🧮" },
-    { id: "learning", label: t(language, "navLearn"), icon: "🛡️" },
-    { id: "profile", label: t(language, "navProfile"), icon: "👤" },
+    { id: "dashboard", label: t(language, "navDashboard"), icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
+    { id: "budgets", label: t(language, "navBudgets"), icon: <PieChart className="w-4 h-4 flex-shrink-0" /> },
+    { id: "goals", label: t(language, "navGoals"), icon: <Target className="w-4 h-4 flex-shrink-0" /> },
+    { id: "schemes", label: t(language, "navSchemes"), icon: <Landmark className="w-4 h-4 flex-shrink-0" /> },
+    { id: "ai_assistant", label: t(language, "navAI"), icon: <Bot className="w-4 h-4 flex-shrink-0" /> },
+    { id: "calculators", label: t(language, "navCalculators"), icon: <Calculator className="w-4 h-4 flex-shrink-0" /> },
+    { id: "learning", label: t(language, "navLearn"), icon: <ShieldCheck className="w-4 h-4 flex-shrink-0" /> },
+    { id: "profile", label: t(language, "navProfile"), icon: <User className="w-4 h-4 flex-shrink-0" /> },
     ...((session?.role === "college_admin" || session?.role === "admin")
-      ? [{ id: "admin", label: t(language, "navAdmin"), icon: "🏫" }]
+      ? [{ id: "admin", label: t(language, "navAdmin"), icon: <ShieldAlert className="w-4 h-4 flex-shrink-0" /> }]
       : []),
   ];
 
@@ -202,7 +216,7 @@ export default function FinSmartApp() {
                 aria-label={mobileMenuOpen ? "Close menu" : "Open navigation menu"}
                 aria-expanded={mobileMenuOpen}
               >
-                {mobileMenuOpen ? "✕" : "☰"}
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>
           )}
@@ -228,7 +242,9 @@ export default function FinSmartApp() {
                     setMobileMenuOpen(false);
                   }}
                 >
-                  <span style={{ fontSize: "1.1rem" }}>{tab.icon}</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", color: isActive ? "var(--primary)" : "var(--text-muted)" }}>
+                    {tab.icon}
+                  </span>
                   {tab.label}
                 </button>
               );
@@ -260,17 +276,18 @@ export default function FinSmartApp() {
                   style={{
                     position: "relative",
                     background: "transparent",
-                    color: isActive ? "#047857" : "var(--text-muted)",
-                    fontWeight: isActive ? 700 : 600,
+                    color: isActive ? "var(--primary)" : "var(--text-muted)",
+                    fontWeight: isActive ? 600 : 500,
                     padding: "9px 16px",
-                    borderRadius: "10px",
+                    borderRadius: "8px",
                     border: "none",
                     cursor: "pointer",
                     zIndex: 1,
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "6px",
+                    gap: "8px",
                     flexShrink: 0,
+                    fontSize: "0.9375rem",
                   }}
                 >
                   {isActive && (
@@ -279,14 +296,17 @@ export default function FinSmartApp() {
                       style={{
                         position: "absolute",
                         inset: 0,
-                        backgroundColor: "#dcfce7",
-                        borderRadius: "10px",
-                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                        backgroundColor: "var(--primary-light)",
+                        borderRadius: "8px",
+                        border: "1px solid var(--primary-border)",
                         zIndex: -1,
                       }}
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 32 }}
                     />
                   )}
+                  <span style={{ display: "inline-flex", alignItems: "center" }}>
+                    {tab.icon}
+                  </span>
                   {tab.label}
                 </button>
               );
@@ -325,18 +345,24 @@ export default function FinSmartApp() {
             <p style={{ fontSize: "0.85rem", lineHeight: 1.6, marginTop: "6px" }}>
               {t(language, "brandSubtitle")} — Empowering citizens, students, and households with transparent financial planning and government welfare discovery.
             </p>
-            <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.85rem" }}>
-              <div>
-                📞 Citizen Helpline:{" "}
-                <a href="tel:+918023456789" className="contact-link" aria-label="Call Helpline">
-                  +91 (080) 2345-6789
-                </a>
+            <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px", fontSize: "0.85rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Phone className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+                <span>
+                  Citizen Helpline:{" "}
+                  <a href="tel:+918023456789" className="contact-link" aria-label="Call Helpline">
+                    +91 (080) 2345-6789
+                  </a>
+                </span>
               </div>
-              <div>
-                ✉️ Support & Grievance:{" "}
-                <a href="mailto:support@finsmart.gov.in" className="contact-link" aria-label="Email Support">
-                  support@finsmart.gov.in
-                </a>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Mail className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+                <span>
+                  Support & Grievance:{" "}
+                  <a href="mailto:support@finsmart.gov.in" className="contact-link" aria-label="Email Support">
+                    support@finsmart.gov.in
+                  </a>
+                </span>
               </div>
             </div>
           </div>
@@ -351,7 +377,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              📊 Financial Dashboard
+              <LayoutDashboard className="w-4 h-4" /> Financial Dashboard
             </button>
             <button
               type="button"
@@ -361,7 +387,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              🎯 Budget Planner & Alerts
+              <PieChart className="w-4 h-4" /> Budget Planner & Alerts
             </button>
             <button
               type="button"
@@ -371,7 +397,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              🏆 Savings Goals Tracker
+              <Target className="w-4 h-4" /> Savings Goals Tracker
             </button>
             <button
               type="button"
@@ -381,7 +407,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              🏛️ Welfare Schemes Matcher
+              <Landmark className="w-4 h-4" /> Welfare Schemes Matcher
             </button>
             <button
               type="button"
@@ -391,7 +417,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              🧮 EMI & SIP Calculators
+              <Calculator className="w-4 h-4" /> Financial Calculators
             </button>
             <button
               type="button"
@@ -401,7 +427,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              🛡️ Fraud Shield & Literacy
+              <ShieldCheck className="w-4 h-4" /> Fraud Shield & Literacy
             </button>
           </div>
 
@@ -415,7 +441,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              🔒 India DPDP Act 2023 Consent
+              <ShieldCheck className="w-4 h-4" /> India DPDP Act 2023 Consent
             </button>
             <button
               type="button"
@@ -425,7 +451,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              📥 Right to Data Portability (DSAR)
+              <Download className="w-4 h-4" /> Right to Data Portability (DSAR)
             </button>
             <button
               type="button"
@@ -435,7 +461,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              📜 RBI Financial Education Norms
+              <FileText className="w-4 h-4" /> RBI Financial Education Norms
             </button>
             <a
               href="https://www.rbi.org.in"
@@ -443,7 +469,7 @@ export default function FinSmartApp() {
               rel="noopener noreferrer"
               className="footer-link"
             >
-              🌐 Reserve Bank of India (RBI) ↗
+              <ExternalLink className="w-4 h-4" /> Reserve Bank of India (RBI)
             </a>
             <a
               href="https://scholarships.gov.in"
@@ -451,7 +477,7 @@ export default function FinSmartApp() {
               rel="noopener noreferrer"
               className="footer-link"
             >
-              🎓 National Scholarship Portal ↗
+              <ExternalLink className="w-4 h-4" /> National Scholarship Portal
             </a>
           </div>
         </div>
@@ -526,63 +552,57 @@ function AuthView({
   };
 
   return (
-    <div style={{ position: "relative", minHeight: "520px", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 0" }}>
-      {/* Subtle light-mode animated background with soft emerald grid */}
-      <Squares
-        direction="diagonal"
-        speed={0.35}
-        squareSize={38}
-        borderColor="rgba(16, 185, 129, 0.08)"
-        hoverFillColor="rgba(16, 185, 129, 0.05)"
-      />
-
+    <div style={{ minHeight: "520px", display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 16px" }}>
       <AnimatedContent
-        distance={28}
+        distance={20}
         direction="vertical"
-        duration={0.45}
-        style={{ width: "100%", maxWidth: "460px", position: "relative", zIndex: 1 }}
+        duration={0.3}
+        style={{ width: "100%", maxWidth: "440px" }}
       >
         <div
-          className="glass-card"
+          className="ledger-card"
           style={{
             padding: "36px 32px",
-            borderRadius: "16px",
+            border: "1px solid var(--border-light)",
+            borderRadius: "var(--radius-lg)",
+            backgroundColor: "#ffffff",
+            boxShadow: "var(--shadow-sm)",
           }}
         >
-          <div style={{ marginBottom: "8px" }}>
-            <BlurText
-              text={mode === "login" ? t(language, "welcomeBack") : t(language, "createAccount")}
-              delay={35}
-              style={{ fontSize: "1.5rem", fontWeight: "800", color: "#0f172a" }}
-            />
+          <div style={{ marginBottom: "6px" }}>
+            <h1 style={{ fontSize: "1.5rem", fontWeight: "700", color: "var(--text-main)", letterSpacing: "-0.02em", margin: 0 }}>
+              {mode === "login" ? t(language, "welcomeBack") : t(language, "createAccount")}
+            </h1>
           </div>
-          <p className="card-description" style={{ marginBottom: "22px", color: "var(--text-muted)" }}>
+          <p className="card-description" style={{ marginBottom: "24px", color: "var(--text-secondary)", fontSize: "0.875rem", lineHeight: 1.5 }}>
             {mode === "login" ? t(language, "signInSubtitle") : t(language, "registerSubtitle")}
           </p>
 
           {error && (
             <div className="alert-banner alert-danger" role="alert" style={{ marginBottom: "16px" }}>
-              ⚠️ {error}
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <div>{error}</div>
             </div>
           )}
 
           <form onSubmit={handleSubmit}>
             {mode === "register" && (
               <>
-                <div className="form-group" style={{ marginBottom: "14px" }}>
-                  <label className="form-label">{t(language, "fullName")}</label>
+                <div className="form-group" style={{ marginBottom: "16px" }}>
+                  <label className="form-label" style={{ fontWeight: 600, fontSize: "0.875rem", marginBottom: "6px" }}>{t(language, "fullName")}</label>
                   <input
                     required
                     className="fin-input"
+                    style={{ minHeight: "44px" }}
                     placeholder="e.g. Ramesh Kumar"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                   />
                 </div>
 
-                <div className="form-group" style={{ marginBottom: "14px" }}>
-                  <label className="form-label">{t(language, "role")}</label>
-                  <select className="fin-input" value={role} onChange={(e) => setRole(e.target.value)}>
+                <div className="form-group" style={{ marginBottom: "16px" }}>
+                  <label className="form-label" style={{ fontWeight: 600, fontSize: "0.875rem", marginBottom: "6px" }}>{t(language, "role")}</label>
+                  <select className="fin-input" style={{ minHeight: "44px" }} value={role} onChange={(e) => setRole(e.target.value)}>
                     <option value="student">{t(language, "student")}</option>
                     <option value="faculty">{t(language, "faculty")}</option>
                     <option value="admin">{t(language, "admin")}</option>
@@ -591,25 +611,27 @@ function AuthView({
               </>
             )}
 
-            <div className="form-group" style={{ marginBottom: "14px" }}>
-              <label className="form-label">{t(language, "email")}</label>
+            <div className="form-group" style={{ marginBottom: "16px" }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: "0.875rem", marginBottom: "6px" }}>{t(language, "email")}</label>
               <input
                 type="email"
                 required
                 className="fin-input"
+                style={{ minHeight: "44px" }}
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
-            <div className="form-group" style={{ marginBottom: "18px" }}>
-              <label className="form-label">{t(language, "password")}</label>
+            <div className="form-group" style={{ marginBottom: "20px" }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: "0.875rem", marginBottom: "6px" }}>{t(language, "password")}</label>
               <input
                 type="password"
                 required
                 minLength={8}
                 className="fin-input"
+                style={{ minHeight: "44px" }}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -617,44 +639,42 @@ function AuthView({
             </div>
 
             {mode === "register" && (
-              <div style={{ marginBottom: "18px", display: "flex", gap: "10px", alignItems: "flex-start" }}>
+              <div style={{ marginBottom: "20px", display: "flex", gap: "10px", alignItems: "flex-start" }}>
                 <input
                   type="checkbox"
                   id="dpdp-consent"
                   checked={consent}
                   onChange={(e) => setConsent(e.target.checked)}
-                  style={{ width: "18px", height: "18px", marginTop: "2px", flexShrink: 0 }}
+                  style={{ width: "18px", height: "18px", marginTop: "3px", flexShrink: 0 }}
                 />
-                <label htmlFor="dpdp-consent" style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>
+                <label htmlFor="dpdp-consent" style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", lineHeight: 1.45 }}>
                   {t(language, "dpdpConsent")}
                 </label>
               </div>
             )}
 
-            <GlareHover
-              glareColor="#ffffff"
-              glareOpacity={0.25}
-              borderRadius="10px"
-              style={{ width: "100%", display: "block" }}
+            <button
+              type="submit"
+              className="btn btn-primary"
+              style={{
+                width: "100%",
+                minHeight: "48px",
+                fontSize: "0.9375rem",
+                fontWeight: 600,
+                backgroundColor: "var(--primary)",
+                color: "#ffffff",
+                border: "1px solid var(--primary-dark)",
+                borderRadius: "var(--radius-md)",
+                cursor: loading ? "not-allowed" : "pointer",
+                transition: "all 0.15s ease",
+              }}
+              disabled={loading}
             >
-              <button
-                type="submit"
-                className="btn btn-primary"
-                style={{
-                  width: "100%",
-                  minHeight: "46px",
-                  fontSize: "0.95rem",
-                  fontWeight: 700,
-                  boxShadow: "0 4px 14px rgba(16, 185, 129, 0.35)",
-                }}
-                disabled={loading}
-              >
-                {loading ? "..." : mode === "login" ? t(language, "signInBtn") : t(language, "registerBtn")}
-              </button>
-            </GlareHover>
+              {loading ? "..." : mode === "login" ? t(language, "signInBtn") : t(language, "registerBtn")}
+            </button>
 
             {mode === "login" && (
-              <div style={{ marginTop: "12px", textAlign: "center" }}>
+              <div style={{ marginTop: "14px", textAlign: "center" }}>
                 <button
                   type="button"
                   onClick={() => {
@@ -662,12 +682,12 @@ function AuthView({
                     setPassword("vivek123");
                   }}
                   style={{
-                    background: "#f0fdf4",
-                    border: "1px dashed #10b981",
-                    color: "#047857",
-                    borderRadius: "8px",
-                    padding: "6px 14px",
-                    fontSize: "0.82rem",
+                    background: "var(--primary-light)",
+                    border: "1px solid var(--primary-border)",
+                    color: "var(--primary)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "8px 16px",
+                    fontSize: "0.8125rem",
                     fontWeight: 600,
                     cursor: "pointer",
                     display: "inline-flex",
@@ -676,7 +696,7 @@ function AuthView({
                     transition: "all 0.15s ease",
                   }}
                 >
-                  ⚡ Fill Demo Login (vivekshaiva9945@gmail.com)
+                  Use Demo Account (vivekshaiva9945@gmail.com)
                 </button>
               </div>
             )}
@@ -729,7 +749,6 @@ function DashboardView({ session, language }: { session: UserSession; language: 
   const [budgetAlerts, setBudgetAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
 
   // New Transaction Form State
   const [amountRupees, setAmountRupees] = useState("");
@@ -792,12 +811,9 @@ function DashboardView({ session, language }: { session: UserSession; language: 
       });
       setAmountRupees("");
       setDescription("");
-      setSuccessMsg("Transaction recorded successfully!");
-      setError("");
       await loadData();
     } catch (err: any) {
       setError(err.message || "Failed to record transaction.");
-      setSuccessMsg("");
     } finally {
       setSubmitting(false);
     }
@@ -807,12 +823,9 @@ function DashboardView({ session, language }: { session: UserSession; language: 
     if (confirm("Are you sure you want to delete this transaction?")) {
       try {
         await api(`/transactions/${id}`, { method: "DELETE" });
-        setSuccessMsg("Transaction deleted successfully.");
-        setError("");
         await loadData();
       } catch (err: any) {
-        setError(err.message || "Failed to delete.");
-        setSuccessMsg("");
+        alert(err.message || "Failed to delete.");
       }
     }
   };
@@ -827,86 +840,109 @@ function DashboardView({ session, language }: { session: UserSession; language: 
       ))}
 
       {error && <div className="alert-banner alert-danger">⚠️ {error}</div>}
-      {successMsg && <div className="alert-banner alert-success">✅ {successMsg}</div>}
 
-      {/* 4-Metric Overview Cards with Staggered Entrance, Spotlight, and CountUp */}
+      {/* 4-Metric Overview Cards with Staggered Entrance and CountUp */}
       <div className="stats-grid">
-        <AnimatedContent distance={20} delay={0} duration={0.35}>
-          <SpotlightCard
-            spotlightColor="rgba(16, 185, 129, 0.12)"
+        <AnimatedContent distance={16} delay={0} duration={0.3}>
+          <div
             className="stat-card"
-            style={{ borderRadius: "14px", height: "100%" }}
+            style={{
+              backgroundColor: "#ffffff",
+              border: "1.5px solid var(--primary-border)",
+              borderRadius: "var(--radius-lg)",
+              padding: "20px",
+              boxShadow: "var(--shadow-sm)",
+              height: "100%",
+            }}
           >
-            <div className="stat-label">{t(language, "netBalance")}</div>
-            <div className="stat-value">
+            <div className="stat-label" style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>{t(language, "netBalance")}</div>
+            <div className="stat-value tabular-nums" style={{ fontSize: "1.875rem", fontWeight: 700, color: "var(--text-main)", letterSpacing: "-0.02em", margin: "6px 0" }}>
               <CountUp
                 to={toRupees(summary ? summary.balance_minor : 0)}
                 prefix="₹"
                 decimals={2}
-                duration={0.6}
+                duration={0.5}
               />
             </div>
-            <div className="stat-subtext">{t(language, "cumulativeCashflow")}</div>
-          </SpotlightCard>
+            <div className="stat-subtext" style={{ fontSize: "0.8125rem", color: "var(--text-muted)" }}>{t(language, "cumulativeCashflow")}</div>
+          </div>
         </AnimatedContent>
 
-        <AnimatedContent distance={20} delay={0.08} duration={0.35}>
-          <SpotlightCard
-            spotlightColor="rgba(16, 185, 129, 0.12)"
+        <AnimatedContent distance={16} delay={0.06} duration={0.3}>
+          <div
             className="stat-card"
-            style={{ borderRadius: "14px", height: "100%" }}
+            style={{
+              backgroundColor: "#ffffff",
+              border: "1px solid var(--border-light)",
+              borderRadius: "var(--radius-lg)",
+              padding: "20px",
+              boxShadow: "var(--shadow-sm)",
+              height: "100%",
+            }}
           >
-            <div className="stat-label">{t(language, "monthlyIncome")}</div>
-            <div className="stat-value" style={{ color: "var(--color-success)" }}>
+            <div className="stat-label" style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>{t(language, "monthlyIncome")}</div>
+            <div className="stat-value tabular-nums" style={{ fontSize: "1.875rem", fontWeight: 700, color: "var(--color-success)", letterSpacing: "-0.02em", margin: "6px 0" }}>
               <CountUp
                 to={toRupees(summary ? summary.income_minor : 0)}
                 prefix="+₹"
                 decimals={2}
-                duration={0.6}
+                duration={0.5}
               />
             </div>
-            <div className="stat-subtext positive">{t(language, "totalCredits")}</div>
-          </SpotlightCard>
+            <div className="stat-subtext positive" style={{ fontSize: "0.8125rem" }}>{t(language, "totalCredits")}</div>
+          </div>
         </AnimatedContent>
 
-        <AnimatedContent distance={20} delay={0.16} duration={0.35}>
-          <SpotlightCard
-            spotlightColor="rgba(16, 185, 129, 0.12)"
+        <AnimatedContent distance={16} delay={0.12} duration={0.3}>
+          <div
             className="stat-card"
-            style={{ borderRadius: "14px", height: "100%" }}
+            style={{
+              backgroundColor: "#ffffff",
+              border: "1px solid var(--border-light)",
+              borderRadius: "var(--radius-lg)",
+              padding: "20px",
+              boxShadow: "var(--shadow-sm)",
+              height: "100%",
+            }}
           >
-            <div className="stat-label">{t(language, "monthlyExpenses")}</div>
-            <div className="stat-value" style={{ color: "var(--color-danger)" }}>
+            <div className="stat-label" style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>{t(language, "monthlyExpenses")}</div>
+            <div className="stat-value tabular-nums" style={{ fontSize: "1.875rem", fontWeight: 700, color: "var(--color-danger)", letterSpacing: "-0.02em", margin: "6px 0" }}>
               <CountUp
                 to={toRupees(summary ? summary.expense_minor : 0)}
                 prefix="-₹"
                 decimals={2}
-                duration={0.6}
+                duration={0.5}
               />
             </div>
-            <div className="stat-subtext negative">{t(language, "totalDebits")}</div>
-          </SpotlightCard>
+            <div className="stat-subtext negative" style={{ fontSize: "0.8125rem" }}>{t(language, "totalDebits")}</div>
+          </div>
         </AnimatedContent>
 
-        <AnimatedContent distance={20} delay={0.24} duration={0.35}>
-          <SpotlightCard
-            spotlightColor="rgba(16, 185, 129, 0.12)"
+        <AnimatedContent distance={16} delay={0.18} duration={0.3}>
+          <div
             className="stat-card"
-            style={{ borderRadius: "14px", height: "100%" }}
+            style={{
+              backgroundColor: "#ffffff",
+              border: "1px solid var(--border-light)",
+              borderRadius: "var(--radius-lg)",
+              padding: "20px",
+              boxShadow: "var(--shadow-sm)",
+              height: "100%",
+            }}
           >
-            <div className="stat-label">{t(language, "savingsRate")}</div>
-            <div className="stat-value">
+            <div className="stat-label" style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>{t(language, "savingsRate")}</div>
+            <div className="stat-value tabular-nums" style={{ fontSize: "1.875rem", fontWeight: 700, color: "var(--text-main)", letterSpacing: "-0.02em", margin: "6px 0" }}>
               <CountUp
                 to={summary ? summary.savings_rate_pct : 0}
                 suffix="%"
                 decimals={1}
-                duration={0.6}
+                duration={0.5}
               />
             </div>
-            <div className={`stat-subtext ${(summary?.savings_rate_pct || 0) >= 20 ? "positive" : "warning"}`}>
+            <div className={`stat-subtext ${(summary?.savings_rate_pct || 0) >= 20 ? "positive" : "warning"}`} style={{ fontSize: "0.8125rem" }}>
               {(summary?.savings_rate_pct || 0) >= 20 ? t(language, "healthySavings") : t(language, "targetSavings")}
             </div>
-          </SpotlightCard>
+          </div>
         </AnimatedContent>
       </div>
 
@@ -981,16 +1017,24 @@ function DashboardView({ session, language }: { session: UserSession; language: 
                 />
               </div>
 
-              <ClickSpark sparkColor="#10b981" sparkCount={12} sparkRadius={36} className="w-full" style={{ width: "100%", display: "block" }}>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ width: "100%", fontWeight: 700 }}
-                  disabled={submitting}
-                >
-                  {submitting ? "..." : t(language, "addTransactionBtn")}
-                </button>
-              </ClickSpark>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                style={{
+                  width: "100%",
+                  minHeight: "48px",
+                  fontSize: "0.9375rem",
+                  fontWeight: 600,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                }}
+                disabled={submitting}
+              >
+                <PlusCircle className="w-5 h-5" />
+                {submitting ? "..." : t(language, "addTransactionBtn")}
+              </button>
             </form>
           </div>
         </AnimatedContent>
@@ -1133,8 +1177,6 @@ function BudgetsView({ session, language }: { session: UserSession; language: La
   const [category, setCategory] = useState("food");
   const [limitRupees, setLimitRupees] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const loadBudgets = useCallback(async () => {
     try {
@@ -1153,24 +1195,20 @@ function BudgetsView({ session, language }: { session: UserSession; language: La
     e.preventDefault();
     const paise = toPaise(limitRupees);
     if (paise <= 0) {
-      setError("Please enter a valid monthly limit greater than ₹0.");
-      setSuccessMsg(null);
+      alert("Please enter a valid monthly limit.");
       return;
     }
 
     setLoading(true);
-    setError(null);
     try {
       await api("/budgets/", {
         method: "PUT",
         body: { category, limit_minor: paise, period: "MONTHLY" },
       });
       setLimitRupees("");
-      setSuccessMsg(`Monthly budget for ${category.toUpperCase()} updated successfully!`);
       await loadBudgets();
     } catch (err: any) {
-      setError(err.message || "Failed to save budget.");
-      setSuccessMsg(null);
+      alert(err.message || "Failed to save budget.");
     } finally {
       setLoading(false);
     }
@@ -1182,9 +1220,6 @@ function BudgetsView({ session, language }: { session: UserSession; language: La
 
   return (
     <div>
-      {error && <div className="alert-banner alert-danger">⚠️ {error}</div>}
-      {successMsg && <div className="alert-banner alert-success">✅ {successMsg}</div>}
-
       <div className="card">
         <div className="card-header">
           <div>
@@ -1328,8 +1363,6 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
   const [category, setCategory] = useState("Emergency Fund");
   const [depositAmounts, setDepositAmounts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const loadGoals = useCallback(async () => {
     try {
@@ -1348,13 +1381,11 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
     e.preventDefault();
     const paise = toPaise(targetRupees);
     if (!name.trim() || paise <= 0) {
-      setError("Please provide a valid goal name and target amount.");
-      setSuccessMsg(null);
+      alert("Please provide a valid goal name and target amount.");
       return;
     }
 
     setLoading(true);
-    setError(null);
     try {
       await api("/goals/", {
         method: "POST",
@@ -1365,15 +1396,12 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
           category,
         },
       });
-      const createdName = name;
       setName("");
       setTargetRupees("");
       setTargetDate("");
-      setSuccessMsg(`Goal "${createdName}" created successfully!`);
       await loadGoals();
     } catch (err: any) {
-      setError(err.message || "Failed to create goal.");
-      setSuccessMsg(null);
+      alert(err.message || "Failed to create goal.");
     } finally {
       setLoading(false);
     }
@@ -1383,31 +1411,24 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
     const amtStr = depositAmounts[goalId];
     const paise = toPaise(amtStr);
     if (paise <= 0) {
-      setError("Please enter a contribution amount greater than ₹0.");
-      setSuccessMsg(null);
+      alert("Please enter a contribution amount greater than ₹0.");
       return;
     }
 
     try {
-      setError(null);
       await api(`/goals/${goalId}/contribute`, {
         method: "POST",
         body: { amount_minor: paise },
       });
       setDepositAmounts({ ...depositAmounts, [goalId]: "" });
-      setSuccessMsg("Contribution recorded successfully!");
       await loadGoals();
     } catch (err: any) {
-      setError(err.message || "Failed to contribute.");
-      setSuccessMsg(null);
+      alert(err.message || "Failed to contribute.");
     }
   };
 
   return (
     <div>
-      {error && <div className="alert-banner alert-danger">⚠️ {error}</div>}
-      {successMsg && <div className="alert-banner alert-success">✅ {successMsg}</div>}
-
       {/* Create New Goal Card */}
       <div className="card">
         <div className="card-header">
@@ -1545,11 +1566,9 @@ function SchemesView({ session, language }: { session: UserSession; language: La
   const [schemes, setSchemes] = useState<any[]>([]);
   const [evaluating, setEvaluating] = useState(false);
   const [expandedCode, setExpandedCode] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const runEvaluation = async () => {
     setEvaluating(true);
-    setError(null);
     try {
       const res = await api("/schemes/eligibility", {
         method: "POST",
@@ -1565,7 +1584,7 @@ function SchemesView({ session, language }: { session: UserSession; language: La
       });
       setSchemes(res);
     } catch (err: any) {
-      setError(err.message || "Failed to evaluate scheme eligibility.");
+      alert(err.message || "Failed to evaluate scheme eligibility.");
     } finally {
       setEvaluating(false);
     }
@@ -1577,8 +1596,6 @@ function SchemesView({ session, language }: { session: UserSession; language: La
 
   return (
     <div>
-      {error && <div className="alert-banner alert-danger">⚠️ {error}</div>}
-
       {/* Criteria Profiler Card */}
       <div className="card">
         <div className="card-header">
@@ -1846,8 +1863,9 @@ function AIAssistantView({ session, language }: { session: UserSession; language
       {/* Sample Query Chips */}
       <div className="chip-group">
         {samplePrompts.map((p, idx) => (
-          <button key={idx} className="chip" onClick={() => handleSend(p)}>
-            💬 {p}
+          <button key={idx} className="chip" onClick={() => handleSend(p)} style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+            <HelpCircle className="w-3.5 h-3.5 text-emerald-700" />
+            {p}
           </button>
         ))}
       </div>
@@ -1916,44 +1934,40 @@ function CalculatorsView({ language }: { language: Language }) {
   const [expenses, setExpenses] = useState("15000");
   const [targetBuffer, setTargetBuffer] = useState("6");
   const [emergencyResult, setEmergencyResult] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const calculateEMI = async () => {
     try {
-      setError(null);
       const res = await api("/calc/emi", {
         method: "POST",
         body: { principal: parseFloat(principal), annual_rate: parseFloat(rate), months: parseInt(tenureMonths) },
       });
       setEmiResult(res);
     } catch (e: any) {
-      setError(e.message || "EMI calculation failed.");
+      alert(e.message);
     }
   };
 
   const calculateSIP = async () => {
     try {
-      setError(null);
       const res = await api("/calc/sip", {
         method: "POST",
         body: { monthly: parseFloat(sipMonthly), annual_rate: parseFloat(sipRate), months: parseInt(sipMonths) },
       });
       setSipResult(res);
     } catch (e: any) {
-      setError(e.message || "SIP calculation failed.");
+      alert(e.message);
     }
   };
 
   const calculateEmergency = async () => {
     try {
-      setError(null);
       const res = await api("/calc/emergency-fund", {
         method: "POST",
         body: { monthly_expenses: parseFloat(expenses), target_months: parseInt(targetBuffer) },
       });
       setEmergencyResult(res);
     } catch (e: any) {
-      setError(e.message || "Emergency fund calculation failed.");
+      alert(e.message);
     }
   };
 
@@ -1966,8 +1980,6 @@ function CalculatorsView({ language }: { language: Language }) {
             <div className="card-description">{t(language, "calcSubtitle")}</div>
           </div>
         </div>
-
-        {error && <div className="alert-banner alert-danger" style={{ marginBottom: "16px" }}>⚠️ {error}</div>}
 
         <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
           <button
@@ -2125,7 +2137,7 @@ function LearningView({ language }: { language: Language }) {
   const [modules, setModules] = useState<any[]>([]);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({});
   const [quizResults, setQuizResults] = useState<Record<number, any>>({});
-  const [quizError, setQuizError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api(`/learning/?lang=${language}`).then(setModules).catch(console.error);
@@ -2134,11 +2146,11 @@ function LearningView({ language }: { language: Language }) {
   const handleQuizSubmit = async (moduleId: number) => {
     const selected = quizAnswers[moduleId];
     if (selected === undefined) {
-      setQuizError("Please select an option before checking your answer.");
+      setError("Please select an answer option before checking.");
       return;
     }
 
-    setQuizError(null);
+    setError(null);
     try {
       const res = await api("/learning/quiz/submit", {
         method: "POST",
@@ -2146,18 +2158,36 @@ function LearningView({ language }: { language: Language }) {
       });
       setQuizResults({ ...quizResults, [moduleId]: res });
     } catch (err: any) {
-      setQuizError(err.message || "Failed to submit quiz.");
+      setError(err.message || "Failed to submit quiz.");
     }
   };
 
   return (
     <div>
       {/* Cyber Fraud Alert Bar */}
-      <div className="alert-banner alert-warning" style={{ marginBottom: "20px" }}>
-        {t(language, "cyberAlert")}
+      <div
+        className="alert-banner alert-warning"
+        style={{
+          marginBottom: "20px",
+          display: "flex",
+          alignItems: "flex-start",
+          gap: "12px",
+          padding: "14px 18px",
+          borderRadius: "var(--radius-md)",
+        }}
+      >
+        <ShieldAlert className="w-5 h-5 flex-shrink-0 text-amber-700 mt-0.5" />
+        <div style={{ fontSize: "0.875rem", lineHeight: 1.5, color: "var(--color-warning)" }}>
+          {t(language, "cyberAlert")}
+        </div>
       </div>
 
-      {quizError && <div className="alert-banner alert-danger" style={{ marginBottom: "20px" }}>⚠️ {quizError}</div>}
+      {error && (
+        <div className="alert-banner alert-danger" style={{ marginBottom: "16px" }}>
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <div>{error}</div>
+        </div>
+      )}
 
       <div className="card">
         <div className="card-header">
@@ -2250,7 +2280,7 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
         method: "PUT",
         body: profile,
       });
-      setMsg("Profile saved successfully.");
+      setMsg("Profile details updated successfully.");
     } catch (err: any) {
       setError(err.message || "Failed to save profile.");
     } finally {
@@ -2259,8 +2289,8 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
   };
 
   const handleDownloadDSAR = async () => {
+    setError(null);
     try {
-      setError(null);
       const data = await api("/profiles/dsar-export");
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -2268,16 +2298,16 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
       a.href = url;
       a.download = `finsmart_data_export_${session.user_id}.json`;
       a.click();
-      setMsg("Data export (DSAR) downloaded successfully.");
+      setMsg("Statutory DSAR personal data export downloaded successfully.");
     } catch (err: any) {
       setError(err.message || "Failed to export data.");
     }
   };
 
   const handleErasure = async () => {
-    if (confirm("WARNING: Right to be Forgotten (DPDP Act 2023). This will permanently delete your account, transactions, and profile. Proceed?")) {
+    if (confirm("WARNING: Right to be Forgotten (India DPDP Act 2023). This will permanently delete your account, ledger transactions, and profile. Proceed?")) {
+      setError(null);
       try {
-        setError(null);
         await api("/profiles/erasure", { method: "DELETE" });
         onLogout();
       } catch (err: any) {
@@ -2296,8 +2326,19 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
           </div>
         </div>
 
-        {error && <div className="alert-banner alert-danger">⚠️ {error}</div>}
-        {msg && <div className="alert-banner alert-info">✓ {msg}</div>}
+        {error && (
+          <div className="alert-banner alert-danger" style={{ marginBottom: "16px" }}>
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <div>{error}</div>
+          </div>
+        )}
+
+        {msg && (
+          <div className="alert-banner alert-success" style={{ marginBottom: "16px" }}>
+            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+            <div>{msg}</div>
+          </div>
+        )}
 
         <form onSubmit={handleSaveProfile}>
           <div className="form-grid">
@@ -2392,7 +2433,10 @@ function AdminView({ session, language }: { session: UserSession; language: Lang
     <div className="card">
       <div className="card-header">
         <div>
-          <div className="card-title">🏫 {t(language, "navAdmin")}</div>
+          <div className="card-title" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Building2 className="w-5 h-5 text-emerald-700" />
+            {t(language, "navAdmin")}
+          </div>
           <div className="card-description">
             Aggregated, privacy-preserving participation metrics
           </div>
