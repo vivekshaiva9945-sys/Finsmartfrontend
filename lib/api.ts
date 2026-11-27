@@ -6,9 +6,10 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/v1";
 
 export function getTenantSlug(): string {
   if (typeof window !== "undefined") {
-    const t = sessionStorage.getItem("finsmart_tenant");
-    if (t && t !== "navkis" && t !== "rvce") return t;
-    sessionStorage.setItem("finsmart_tenant", "public");
+    const t = localStorage.getItem("finsmart_tenant") || sessionStorage.getItem("finsmart_tenant");
+    if (t && ["public", "navkis", "rvce"].includes(t.toLowerCase())) {
+      return t.toLowerCase();
+    }
     return "public";
   }
   return process.env.NEXT_PUBLIC_TENANT || "public";
@@ -16,7 +17,54 @@ export function getTenantSlug(): string {
 
 export function setTenantSlug(tenant: string): void {
   if (typeof window !== "undefined") {
-    sessionStorage.setItem("finsmart_tenant", tenant.trim().toLowerCase());
+    const clean = tenant.trim().toLowerCase();
+    sessionStorage.setItem("finsmart_tenant", clean);
+    localStorage.setItem("finsmart_tenant", clean);
+  }
+}
+
+export function getStoredToken(): string | null {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("finsmart_token") || sessionStorage.getItem("finsmart_token");
+  }
+  return null;
+}
+
+export function getStoredUser(): any | null {
+  if (typeof window !== "undefined") {
+    const raw = localStorage.getItem("finsmart_user") || sessionStorage.getItem("finsmart_user");
+    if (raw) {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
+export function setStoredAuth(data: { access_token: string; user: any }, remember: boolean = true): void {
+  if (typeof window !== "undefined") {
+    sessionStorage.setItem("finsmart_token", data.access_token);
+    sessionStorage.setItem("finsmart_user", JSON.stringify(data.user));
+    if (remember) {
+      localStorage.setItem("finsmart_token", data.access_token);
+      localStorage.setItem("finsmart_user", JSON.stringify(data.user));
+    } else {
+      localStorage.removeItem("finsmart_token");
+      localStorage.removeItem("finsmart_user");
+    }
+  }
+}
+
+export function clearStoredAuth(): void {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("finsmart_token");
+    localStorage.removeItem("finsmart_user");
+    sessionStorage.removeItem("finsmart_token");
+    sessionStorage.removeItem("finsmart_user");
+    window.dispatchEvent(new Event("finsmart_auth_expired"));
   }
 }
 
@@ -29,7 +77,7 @@ export interface ApiOptions {
 
 export async function api<T = any>(path: string, options: ApiOptions = {}): Promise<T> {
   const tenant = options.tenant || getTenantSlug();
-  const token = options.token || (typeof window !== "undefined" ? sessionStorage.getItem("finsmart_token") : null);
+  const token = options.token || (typeof window !== "undefined" ? getStoredToken() : null);
 
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
 
@@ -63,8 +111,7 @@ export async function api<T = any>(path: string, options: ApiOptions = {}): Prom
 
     // Auto-clear invalid/expired session tokens
     if (res.status === 401 && typeof window !== "undefined" && !cleanPath.includes("/auth/")) {
-      sessionStorage.removeItem("finsmart_token");
-      sessionStorage.removeItem("finsmart_user");
+      clearStoredAuth();
     }
 
     throw new Error(errorDetail);

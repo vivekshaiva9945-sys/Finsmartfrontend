@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { api, formatINR, getTenantSlug, setTenantSlug, toPaise, toRupees } from "../lib/api";
+import { api, clearStoredAuth, formatINR, getStoredToken, getStoredUser, getTenantSlug, setStoredAuth, setTenantSlug, toPaise, toRupees } from "../lib/api";
 import { Language, t } from "../lib/i18n";
 import { CountUp, AnimatedContent, BlurText, ClickSpark, DotGrid, ShinyText, SpotlightCard } from "../components/react-bits";
 import {
@@ -67,20 +67,23 @@ export default function FinSmartApp() {
 
   // Initialize session and tenant from storage
   useEffect(() => {
-    const savedToken = sessionStorage.getItem("finsmart_token");
-    const savedUser = sessionStorage.getItem("finsmart_user");
-    // Ensure public tenant is always active for the general public
-    sessionStorage.setItem("finsmart_tenant", "public");
-    setTenant("public");
+    const savedTenant = getTenantSlug();
+    setTenant(savedTenant);
+
+    const savedToken = getStoredToken();
+    const savedUser = getStoredUser();
 
     if (savedToken && savedUser) {
-      try {
-        const u = JSON.parse(savedUser);
-        setSession({ ...u, token: savedToken });
-      } catch {
-        sessionStorage.clear();
-      }
+      setSession({ ...savedUser, token: savedToken });
     }
+
+    const onAuthExpired = () => {
+      setSession(null);
+      setCurrentTab("dashboard");
+    };
+
+    window.addEventListener("finsmart_auth_expired", onAuthExpired);
+    return () => window.removeEventListener("finsmart_auth_expired", onAuthExpired);
   }, []);
 
   // Dynamic Title & Meta Description per Tab / Page
@@ -127,8 +130,7 @@ export default function FinSmartApp() {
     metaDesc.setAttribute("content", activeDesc);
   }, [session, currentTab]);
 
-  const handleLoginSuccess = (data: any) => {
-    sessionStorage.setItem("finsmart_token", data.access_token);
+  const handleLoginSuccess = (data: any, remember: boolean = true) => {
     const u = {
       token: data.access_token,
       user_id: data.user_id,
@@ -137,15 +139,15 @@ export default function FinSmartApp() {
       full_name: data.full_name,
       email: data.email,
     };
-    sessionStorage.setItem("finsmart_user", JSON.stringify(u));
+    setStoredAuth({ access_token: data.access_token, user: u }, remember);
     setSession(u);
     setCurrentTab("dashboard");
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem("finsmart_token");
-    sessionStorage.removeItem("finsmart_user");
+    clearStoredAuth();
     setSession(null);
+    setCurrentTab("dashboard");
   };
 
   const navItems = [
@@ -228,7 +230,7 @@ export default function FinSmartApp() {
       <main id="main-content">
       {/* Main Authentication Flow if not logged in */}
       {!session ? (
-        <AuthView tenant={tenant} language={language} onLoginSuccess={handleLoginSuccess} />
+        <AuthView tenant={tenant} language={language} onLoginSuccess={handleLoginSuccess} onTenantChange={(t) => setTenant(t)} />
       ) : (
         <>
           {/* Mobile Collapsible Navigation Drawer */}
@@ -499,17 +501,21 @@ function AuthView({
   tenant,
   language,
   onLoginSuccess,
+  onTenantChange,
 }: {
   tenant: string;
   language: Language;
-  onLoginSuccess: (d: any) => void;
+  onLoginSuccess: (d: any, remember: boolean) => void;
+  onTenantChange?: (t: string) => void;
 }) {
+  const [selectedTenant, setSelectedTenant] = useState(tenant || "public");
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState("student");
   const [consent, setConsent] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [honeypot, setHoneypot] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -545,6 +551,7 @@ function AuthView({
         }
         const res = await api("/auth/register", {
           method: "POST",
+          tenant: selectedTenant,
           body: {
             email: email.trim(),
             password,
@@ -554,13 +561,16 @@ function AuthView({
             honeypot: honeypot || undefined,
           },
         });
-        onLoginSuccess(res);
+        setTenantSlug(selectedTenant);
+        onLoginSuccess(res, rememberMe);
       } else {
         const res = await api("/auth/login", {
           method: "POST",
+          tenant: selectedTenant,
           body: { email: email.trim(), password, honeypot: honeypot || undefined },
         });
-        onLoginSuccess(res);
+        setTenantSlug(selectedTenant);
+        onLoginSuccess(res, rememberMe);
       }
     } catch (err: any) {
       setError(err.message || "Authentication failed.");
@@ -617,6 +627,30 @@ function AuthView({
                 value={honeypot}
                 onChange={(e) => setHoneypot(e.target.value)}
               />
+            </div>
+
+            {/* Institution / Portal Selector */}
+            <div className="form-group" style={{ marginBottom: "16px" }}>
+              <label htmlFor="auth-institution" className="form-label" style={{ fontWeight: 600, fontSize: "0.875rem", marginBottom: "6px" }}>
+                {t(language, "institution")}
+              </label>
+              <select
+                id="auth-institution"
+                name="tenant"
+                className="fin-input"
+                style={{ minHeight: "44px" }}
+                value={selectedTenant}
+                onChange={(e) => {
+                  const tVal = e.target.value;
+                  setSelectedTenant(tVal);
+                  setTenantSlug(tVal);
+                  onTenantChange?.(tVal);
+                }}
+              >
+                <option value="public">{t(language, "portalPublic")}</option>
+                <option value="navkis">{t(language, "portalNavkis")}</option>
+                <option value="rvce">{t(language, "portalRvce")}</option>
+              </select>
             </div>
             {mode === "register" && (
               <>
@@ -691,6 +725,20 @@ function AuthView({
                 </label>
               </div>
             )}
+
+            {/* Session Persistence / Remember Me */}
+            <div style={{ marginBottom: "18px", display: "flex", gap: "8px", alignItems: "center" }}>
+              <input
+                type="checkbox"
+                id="remember-me"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                style={{ width: "16px", height: "16px", cursor: "pointer", flexShrink: 0 }}
+              />
+              <label htmlFor="remember-me" style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", cursor: "pointer", userSelect: "none" }}>
+                {t(language, "rememberMe")}
+              </label>
+            </div>
 
             <button
               type="submit"
