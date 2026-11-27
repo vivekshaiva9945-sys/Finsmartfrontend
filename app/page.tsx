@@ -492,8 +492,8 @@ export default function FinSmartApp() {
               Terms of Service
             </Link>
           </div>
-          <div>
-            Zero Speculative Trading Advice • Built for Public Financial Literacy
+          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", maxWidth: "520px", textAlign: "right" }}>
+            Educational guidance only • Not professional financial or investment advice (SEBI/RBI Non-Advisory Platform)
           </div>
         </div>
       </footer>
