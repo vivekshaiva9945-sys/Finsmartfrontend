@@ -887,9 +887,14 @@ function DashboardView({ session, language }: { session: UserSession; language: 
     setError("");
 
     try {
+      const clientId = typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `txn-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
       await api("/transactions/", {
         method: "POST",
         body: {
+          client_id: clientId,
           amount_minor: paise,
           kind,
           category,
@@ -1278,6 +1283,8 @@ function DashboardView({ session, language }: { session: UserSession; language: 
 // =============================================================================
 function BudgetsView({ session, language }: { session: UserSession; language: Language }) {
   const [budgets, setBudgets] = useState<any[]>([]);
+  const [loadingBudgets, setLoadingBudgets] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [category, setCategory] = useState("food");
   const [limitRupees, setLimitRupees] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1285,10 +1292,14 @@ function BudgetsView({ session, language }: { session: UserSession; language: La
 
   const loadBudgets = useCallback(async () => {
     try {
+      setLoadingBudgets(true);
+      setLoadError(null);
       const res = await api("/budgets/status");
       setBudgets(res);
     } catch (err: any) {
-      console.error(err);
+      setLoadError(err.message || "Failed to load active budgets.");
+    } finally {
+      setLoadingBudgets(false);
     }
   }, []);
 
@@ -1394,10 +1405,27 @@ function BudgetsView({ session, language }: { session: UserSession; language: La
             </div>
           </div>
 
-          {budgets.length === 0 ? (
-            <p style={{ color: "var(--text-muted)", padding: "16px 0" }}>
-              No category budgets created yet. Define your monthly targets above.
-            </p>
+          {loadError && (
+            <div className="alert-banner alert-danger" style={{ marginBottom: "16px" }}>
+              <AlertCircle aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
+              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+                <span>{loadError}</span>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={loadBudgets}>Retry</button>
+              </div>
+            </div>
+          )}
+
+          {loadingBudgets ? (
+            <div style={{ padding: "32px 16px", textAlign: "center", color: "var(--text-muted)" }}>
+              Loading monthly budgets...
+            </div>
+          ) : budgets.length === 0 ? (
+            <div style={{ padding: "28px 16px", textAlign: "center", background: "var(--bg-subtle)", borderRadius: "var(--radius-md)" }}>
+              <p style={{ color: "var(--text-main)", fontWeight: 600, marginBottom: "4px" }}>No category budgets created yet</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", margin: 0 }}>
+                Define your monthly spending limit above to monitor category overspend and calculate your daily safe allowance.
+              </p>
+            </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
               {budgets.map((b) => {
@@ -1489,6 +1517,8 @@ function BudgetsView({ session, language }: { session: UserSession; language: La
 // =============================================================================
 function GoalsView({ session, language }: { session: UserSession; language: Language }) {
   const [goals, setGoals] = useState<any[]>([]);
+  const [loadingGoals, setLoadingGoals] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [targetRupees, setTargetRupees] = useState("");
   const [targetDate, setTargetDate] = useState("");
@@ -1499,10 +1529,14 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
 
   const loadGoals = useCallback(async () => {
     try {
+      setLoadingGoals(true);
+      setLoadError(null);
       const res = await api("/goals/");
       setGoals(res);
     } catch (err: any) {
-      console.error(err);
+      setLoadError(err.message || "Failed to load savings milestones.");
+    } finally {
+      setLoadingGoals(false);
     }
   }, []);
 
@@ -1646,10 +1680,27 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
             <div className="card-title">{t(language, "yourMilestones")}</div>
           </div>
 
-          {goals.length === 0 ? (
-            <p style={{ color: "var(--text-muted)", padding: "16px 0" }}>
-              No savings goals currently active. Create your first goal above!
-            </p>
+          {loadError && (
+            <div className="alert-banner alert-danger" style={{ marginBottom: "16px" }}>
+              <AlertCircle aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
+              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+                <span>{loadError}</span>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={loadGoals}>Retry</button>
+              </div>
+            </div>
+          )}
+
+          {loadingGoals ? (
+            <div style={{ padding: "32px 16px", textAlign: "center", color: "var(--text-muted)" }}>
+              Loading savings milestones...
+            </div>
+          ) : goals.length === 0 ? (
+            <div style={{ padding: "28px 16px", textAlign: "center", background: "var(--bg-subtle)", borderRadius: "var(--radius-md)" }}>
+              <p style={{ color: "var(--text-main)", fontWeight: 600, marginBottom: "4px" }}>No savings goals created yet</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", margin: 0 }}>
+                Define a targeted savings milestone above to track your monthly progress and safe contributions.
+              </p>
+            </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
               {goals.map((g) => (
@@ -1871,7 +1922,19 @@ function SchemesView({ session, language }: { session: UserSession; language: La
             {t(language, "evaluatedSchemes")} ({schemes.filter((s) => s.eligible).length} {t(language, "likelyEligibleCount")})
           </h3>
 
-          {schemes.map((s) => {
+          {evaluating ? (
+            <div style={{ padding: "32px 16px", textAlign: "center", color: "var(--text-muted)" }}>
+              Evaluating eligibility criteria against welfare programs...
+            </div>
+          ) : schemes.length === 0 ? (
+            <div style={{ padding: "28px 16px", textAlign: "center", background: "var(--bg-subtle)", borderRadius: "var(--radius-md)" }}>
+              <p style={{ color: "var(--text-main)", fontWeight: 600, marginBottom: "4px" }}>No schemes evaluated</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", margin: 0 }}>
+                Click &quot;Check Eligibility&quot; above to evaluate your profile criteria.
+              </p>
+            </div>
+          ) : (
+            schemes.map((s) => {
             const isExpanded = expandedCode === s.code;
             const displayTitle = language === "kn" && s.title_kn ? s.title_kn : language === "hi" && s.title_hi ? s.title_hi : s.title_en;
 
@@ -1965,7 +2028,7 @@ function SchemesView({ session, language }: { session: UserSession; language: La
                 </div>
               </SpotlightCard>
             );
-          })}
+          }))}
         </div>
       </AnimatedContent>
     </div>
@@ -2389,13 +2452,27 @@ function CalculatorsView({ language }: { language: Language }) {
 // =============================================================================
 function LearningView({ language }: { language: Language }) {
   const [modules, setModules] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({});
   const [quizResults, setQuizResults] = useState<Record<number, any>>({});
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    api(`/learning/?lang=${language}`).then(setModules).catch(console.error);
+  const fetchModules = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await api(`/learning/?lang=${language}`);
+      setModules(res);
+    } catch (err: any) {
+      setError(err.message || "Failed to load financial literacy modules.");
+    } finally {
+      setLoading(false);
+    }
   }, [language]);
+
+  useEffect(() => {
+    fetchModules();
+  }, [fetchModules]);
 
   const handleQuizSubmit = async (moduleId: number) => {
     const selected = quizAnswers[moduleId];
@@ -2452,7 +2529,29 @@ function LearningView({ language }: { language: Language }) {
             </div>
           </div>
 
-          {modules.map((m) => {
+          {error && (
+            <div className="alert-banner alert-danger" style={{ marginBottom: "16px" }}>
+              <AlertCircle aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
+              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+                <span>{error}</span>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={fetchModules}>Retry</button>
+              </div>
+            </div>
+          )}
+
+          {loading ? (
+            <div style={{ padding: "32px 16px", textAlign: "center", color: "var(--text-muted)" }}>
+              Loading financial literacy and cyber fraud shield modules...
+            </div>
+          ) : modules.length === 0 ? (
+            <div style={{ padding: "28px 16px", textAlign: "center", background: "var(--bg-subtle)", borderRadius: "var(--radius-md)" }}>
+              <p style={{ color: "var(--text-main)", fontWeight: 600, marginBottom: "4px" }}>No educational modules available</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", margin: 0 }}>
+                Please check your network connection or select another language.
+              </p>
+            </div>
+          ) : (
+            modules.map((m) => {
             const q = m.quiz && m.quiz.length > 0 ? m.quiz[0] : null;
             const result = quizResults[m.id];
 
@@ -2508,7 +2607,7 @@ function LearningView({ language }: { language: Language }) {
                 </div>
               </SpotlightCard>
             );
-          })}
+          }))}
         </div>
       </AnimatedContent>
     </div>
