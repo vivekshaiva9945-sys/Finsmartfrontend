@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { api, formatINR, getTenantSlug, setTenantSlug, toPaise, toRupees } from "../lib/api";
 import { Language, t } from "../lib/i18n";
@@ -436,16 +437,12 @@ export default function FinSmartApp() {
 
           <div className="footer-col">
             <div className="footer-title">Governance & Privacy</div>
-            <button
-              type="button"
-              className="footer-link"
-              onClick={() => {
-                if (session) setCurrentTab("profile");
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            >
-              <ShieldCheck aria-hidden="true" className="w-4 h-4" /> India DPDP Act 2023 Consent
-            </button>
+            <Link href="/privacy" className="footer-link">
+              <ShieldCheck aria-hidden="true" className="w-4 h-4" /> Privacy Policy (DPDP 2023)
+            </Link>
+            <Link href="/terms" className="footer-link">
+              <FileText aria-hidden="true" className="w-4 h-4" /> Terms & Educational Disclaimer
+            </Link>
             <button
               type="button"
               className="footer-link"
@@ -455,16 +452,6 @@ export default function FinSmartApp() {
               }}
             >
               <Download aria-hidden="true" className="w-4 h-4" /> Right to Data Portability (DSAR)
-            </button>
-            <button
-              type="button"
-              className="footer-link"
-              onClick={() => {
-                if (session) setCurrentTab("learning");
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            >
-              <FileText aria-hidden="true" className="w-4 h-4" /> RBI Financial Education Norms
             </button>
             <a
               href="https://www.rbi.org.in"
@@ -487,7 +474,14 @@ export default function FinSmartApp() {
 
         <div className="footer-bottom">
           <div>
-            © {new Date().getFullYear()} FinSmart. All rights reserved.
+            © {new Date().getFullYear()} FinSmart (Team LYNX, VTU). All rights reserved. •{" "}
+            <Link href="/privacy" style={{ color: "var(--text-secondary)", textDecoration: "underline" }}>
+              Privacy Policy
+            </Link>{" "}
+            •{" "}
+            <Link href="/terms" style={{ color: "var(--text-secondary)", textDecoration: "underline" }}>
+              Terms of Service
+            </Link>
           </div>
           <div>
             Zero Speculative Trading Advice • Built for Public Financial Literacy
@@ -516,34 +510,55 @@ function AuthView({
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState("student");
   const [consent, setConsent] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Form validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError("Please provide a valid email address (e.g. name@example.com).");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password must contain at least 8 characters.");
+      return;
+    }
+    if (honeypot) {
+      setError("Automated submission detected.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       if (mode === "register") {
+        if (!fullName.trim() || fullName.trim().length < 2) {
+          throw new Error("Full name must be at least 2 characters.");
+        }
         if (!consent) {
           throw new Error("Explicit consent is legally required under India's DPDP Act 2023.");
         }
         const res = await api("/auth/register", {
           method: "POST",
           body: {
-            email,
+            email: email.trim(),
             password,
-            full_name: fullName,
+            full_name: fullName.trim(),
             role,
             consent_data_processing: consent,
+            honeypot: honeypot || undefined,
           },
         });
         onLoginSuccess(res);
       } else {
         const res = await api("/auth/login", {
           method: "POST",
-          body: { email, password },
+          body: { email: email.trim(), password, honeypot: honeypot || undefined },
         });
         onLoginSuccess(res);
       }
@@ -589,6 +604,19 @@ function AuthView({
           )}
 
           <form onSubmit={handleSubmit}>
+            {/* Honeypot field for bot spam trap */}
+            <div style={{ display: "none" }} aria-hidden="true">
+              <label htmlFor="website_url">Website</label>
+              <input
+                id="website_url"
+                name="website_url"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
             {mode === "register" && (
               <>
                 <div className="form-group" style={{ marginBottom: "16px" }}>

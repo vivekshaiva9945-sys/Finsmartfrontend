@@ -1,0 +1,9 @@
+# FinSmart Robots.txt
+User-agent: *
+Allow: /
+Allow: /privacy
+Allow: /terms
+Disallow: /api/
+Disallow: /admin/
+
+Sitemap: https://finsmart.gov.in/sitemap.xml
