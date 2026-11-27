@@ -1233,6 +1233,7 @@ function BudgetsView({ session, language }: { session: UserSession; language: La
   const [category, setCategory] = useState("food");
   const [limitRupees, setLimitRupees] = useState("");
   const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const loadBudgets = useCallback(async () => {
     try {
@@ -1251,20 +1252,23 @@ function BudgetsView({ session, language }: { session: UserSession; language: La
     e.preventDefault();
     const paise = toPaise(limitRupees);
     if (paise <= 0) {
-      alert("Please enter a valid monthly limit.");
+      setFeedback({ type: "error", text: "Please enter a valid monthly limit greater than ₹0." });
       return;
     }
 
     setLoading(true);
+    setFeedback(null);
     try {
       await api("/budgets/", {
         method: "PUT",
         body: { category, limit_minor: paise, period: "MONTHLY" },
       });
       setLimitRupees("");
+      setFeedback({ type: "success", text: "Budget target saved and updated successfully." });
+      setTimeout(() => setFeedback(null), 4000);
       await loadBudgets();
     } catch (err: any) {
-      alert(err.message || "Failed to save budget.");
+      setFeedback({ type: "error", text: err.message || "Failed to save budget." });
     } finally {
       setLoading(false);
     }
@@ -1276,134 +1280,158 @@ function BudgetsView({ session, language }: { session: UserSession; language: La
 
   return (
     <div>
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <div className="card-title">{t(language, "setMonthlyBudget")}</div>
-            <div className="card-description">{t(language, "budgetSubtitle")}</div>
-          </div>
-        </div>
-
-        <form onSubmit={handleSaveBudget} className="form-grid" style={{ alignItems: "flex-end" }}>
-          <div className="form-group">
-            <label className="form-label">{t(language, "category")}</label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="food">{t(language, "catFood")}</option>
-              <option value="education">{t(language, "catEducation")}</option>
-              <option value="books">{t(language, "catBooks")}</option>
-              <option value="rent">{t(language, "catRent")}</option>
-              <option value="travel">{t(language, "catTravel")}</option>
-              <option value="bills">{t(language, "catBills")}</option>
-              <option value="other">{t(language, "catOther")}</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">{t(language, "monthlyLimit")}</label>
-            <input
-              type="number"
-              step="1"
-              required
-              placeholder="e.g. 5000"
-              value={limitRupees}
-              onChange={(e) => setLimitRupees(e.target.value)}
-            />
-          </div>
-
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? "…" : t(language, "saveBudgetBtn")}
-          </button>
-        </form>
-      </div>
-
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <div className="card-title">{t(language, "activeBudgets")}</div>
-            <div className="card-description">
-              {daysRemaining} {t(language, "daysRemainingText")}
+      <AnimatedContent distance={16} duration={0.3}>
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <div className="card-title">{t(language, "setMonthlyBudget")}</div>
+              <div className="card-description">{t(language, "budgetSubtitle")}</div>
             </div>
           </div>
+
+          {feedback && (
+            <div className={`alert-banner alert-${feedback.type === "success" ? "success" : "danger"}`} style={{ marginBottom: "16px" }}>
+              {feedback.type === "success" ? (
+                <CheckCircle2 aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
+              ) : (
+                <AlertCircle aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
+              )}
+              <div>{feedback.text}</div>
+            </div>
+          )}
+
+          <form onSubmit={handleSaveBudget} className="form-grid" style={{ alignItems: "flex-end" }}>
+            <div className="form-group">
+              <label className="form-label">{t(language, "category")}</label>
+              <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                <option value="food">{t(language, "catFood")}</option>
+                <option value="education">{t(language, "catEducation")}</option>
+                <option value="books">{t(language, "catBooks")}</option>
+                <option value="rent">{t(language, "catRent")}</option>
+                <option value="travel">{t(language, "catTravel")}</option>
+                <option value="bills">{t(language, "catBills")}</option>
+                <option value="other">{t(language, "catOther")}</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">{t(language, "monthlyLimit")}</label>
+              <input
+                type="number"
+                step="1"
+                required
+                placeholder="e.g. 5000"
+                value={limitRupees}
+                onChange={(e) => setLimitRupees(e.target.value)}
+              />
+            </div>
+
+            <ClickSpark sparkColor="#047857" sparkCount={5}>
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                {loading ? "…" : t(language, "saveBudgetBtn")}
+              </button>
+            </ClickSpark>
+          </form>
         </div>
+      </AnimatedContent>
 
-        {budgets.length === 0 ? (
-          <p style={{ color: "var(--text-muted)", padding: "16px 0" }}>
-            No category budgets created yet. Define your monthly targets above.
-          </p>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
-            {budgets.map((b) => {
-              const dailyAllowance = Math.max(0, Math.floor(b.remaining_minor / daysRemaining));
-              return (
-                <div
-                  key={b.category}
-                  className="card"
-                  style={{
-                    marginBottom: 0,
-                    borderLeft: `5px solid ${
-                      b.level === "over"
-                        ? "var(--color-danger)"
-                        : b.level === "warning"
-                        ? "var(--color-warning)"
-                        : "var(--color-success)"
-                    }`,
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <strong style={{ fontSize: "1.05rem", textTransform: "capitalize" }}>{b.category}</strong>
-                    <span
-                      className={`badge ${
-                        b.level === "over"
-                          ? "badge-ineligible"
-                          : b.level === "warning"
-                          ? "badge-ineligible"
-                          : "badge-eligible"
-                      }`}
-                    >
-                      {b.percent}% {t(language, "used")}
-                    </span>
-                  </div>
-
-                  <div className="progress-bar-container">
-                    <div
-                      className={`progress-bar-fill ${
-                        b.level === "over"
-                          ? "progress-danger"
-                          : b.level === "warning"
-                          ? "progress-warning"
-                          : "progress-ok"
-                      }`}
-                      style={{ width: `${Math.min(b.percent, 100)}%` }}
-                    />
-                  </div>
-
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.84rem" }}>
-                    <span>{t(language, "spent")}: {formatINR(b.spent_minor)}</span>
-                    <span>{t(language, "limit")}: {formatINR(b.limit_minor)}</span>
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop: "10px",
-                      paddingTop: "8px",
-                      borderTop: "1px solid var(--border-light)",
-                      fontSize: "0.8rem",
-                      color: "var(--text-muted)",
-                      display: "flex",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <span>{t(language, "remaining")}: {formatINR(b.remaining_minor)}</span>
-                    <span>
-                      {t(language, "dailySafeAllowance")}: <strong>{formatINR(dailyAllowance)}/day</strong>
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+      <AnimatedContent distance={16} delay={0.1} duration={0.3}>
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <div className="card-title">{t(language, "activeBudgets")}</div>
+              <div className="card-description">
+                {daysRemaining} {t(language, "daysRemainingText")}
+              </div>
+            </div>
           </div>
-        )}
-      </div>
+
+          {budgets.length === 0 ? (
+            <p style={{ color: "var(--text-muted)", padding: "16px 0" }}>
+              No category budgets created yet. Define your monthly targets above.
+            </p>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
+              {budgets.map((b) => {
+                const dailyAllowance = Math.max(0, Math.floor(b.remaining_minor / daysRemaining));
+                return (
+                  <SpotlightCard
+                    key={b.category}
+                    spotlightColor="rgba(4, 120, 87, 0.08)"
+                    spotlightSize={240}
+                    style={{ borderRadius: "var(--radius-lg)", marginBottom: 0 }}
+                  >
+                    <div
+                      className="card"
+                      style={{
+                        marginBottom: 0,
+                        height: "100%",
+                        borderLeft: `5px solid ${
+                          b.level === "over"
+                            ? "var(--color-danger)"
+                            : b.level === "warning"
+                            ? "var(--color-warning)"
+                            : "var(--color-success)"
+                        }`,
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <strong style={{ fontSize: "1.05rem", textTransform: "capitalize" }}>{b.category}</strong>
+                        <span
+                          className={`badge ${
+                            b.level === "over"
+                              ? "badge-ineligible"
+                              : b.level === "warning"
+                              ? "badge-ineligible"
+                              : "badge-eligible"
+                          }`}
+                        >
+                          {b.percent}% {t(language, "used")}
+                        </span>
+                      </div>
+
+                      <div className="progress-bar-container">
+                        <div
+                          className={`progress-bar-fill ${
+                            b.level === "over"
+                              ? "progress-danger"
+                              : b.level === "warning"
+                              ? "progress-warning"
+                              : "progress-ok"
+                          }`}
+                          style={{ width: `${Math.min(b.percent, 100)}%` }}
+                        />
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.84rem" }}>
+                        <span>{t(language, "spent")}: {formatINR(b.spent_minor)}</span>
+                        <span>{t(language, "limit")}: {formatINR(b.limit_minor)}</span>
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: "10px",
+                          paddingTop: "8px",
+                          borderTop: "1px solid var(--border-light)",
+                          fontSize: "0.8rem",
+                          color: "var(--text-muted)",
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <span>{t(language, "remaining")}: {formatINR(b.remaining_minor)}</span>
+                        <span>
+                          {t(language, "dailySafeAllowance")}: <strong>{formatINR(dailyAllowance)}/day</strong>
+                        </span>
+                      </div>
+                    </div>
+                  </SpotlightCard>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </AnimatedContent>
     </div>
   );
 }
@@ -1419,6 +1447,7 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
   const [category, setCategory] = useState("Emergency Fund");
   const [depositAmounts, setDepositAmounts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const loadGoals = useCallback(async () => {
     try {
@@ -1437,11 +1466,12 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
     e.preventDefault();
     const paise = toPaise(targetRupees);
     if (!name.trim() || paise <= 0) {
-      alert("Please provide a valid goal name and target amount.");
+      setFeedback({ type: "error", text: "Please provide a valid goal name and target amount greater than ₹0." });
       return;
     }
 
     setLoading(true);
+    setFeedback(null);
     try {
       await api("/goals/", {
         method: "POST",
@@ -1455,9 +1485,11 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
       setName("");
       setTargetRupees("");
       setTargetDate("");
+      setFeedback({ type: "success", text: "New milestone goal created successfully." });
+      setTimeout(() => setFeedback(null), 4000);
       await loadGoals();
     } catch (err: any) {
-      alert(err.message || "Failed to create goal.");
+      setFeedback({ type: "error", text: err.message || "Failed to create goal." });
     } finally {
       setLoading(false);
     }
@@ -1467,142 +1499,177 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
     const amtStr = depositAmounts[goalId];
     const paise = toPaise(amtStr);
     if (paise <= 0) {
-      alert("Please enter a contribution amount greater than ₹0.");
+      setFeedback({ type: "error", text: "Please enter a contribution amount greater than ₹0." });
       return;
     }
 
+    setFeedback(null);
     try {
       await api(`/goals/${goalId}/contribute`, {
         method: "POST",
         body: { amount_minor: paise },
       });
       setDepositAmounts({ ...depositAmounts, [goalId]: "" });
+      setFeedback({ type: "success", text: "Contribution recorded towards goal progress." });
+      setTimeout(() => setFeedback(null), 4000);
       await loadGoals();
     } catch (err: any) {
-      alert(err.message || "Failed to contribute.");
+      setFeedback({ type: "error", text: err.message || "Failed to contribute." });
     }
   };
 
   return (
     <div>
       {/* Create New Goal Card */}
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <div className="card-title">{t(language, "createGoal")}</div>
-            <div className="card-description">{t(language, "goalSubtitle")}</div>
+      <AnimatedContent distance={16} duration={0.3}>
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <div className="card-title">{t(language, "createGoal")}</div>
+              <div className="card-description">{t(language, "goalSubtitle")}</div>
+            </div>
           </div>
+
+          {feedback && (
+            <div className={`alert-banner alert-${feedback.type === "success" ? "success" : "danger"}`} style={{ marginBottom: "16px" }}>
+              {feedback.type === "success" ? (
+                <CheckCircle2 aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
+              ) : (
+                <AlertCircle aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
+              )}
+              <div>{feedback.text}</div>
+            </div>
+          )}
+
+          <form onSubmit={handleCreateGoal}>
+            <div className="form-grid">
+              <div className="form-group">
+                <label className="form-label">{t(language, "goalTitle")}</label>
+                <input
+                  required
+                  placeholder="e.g. Next Semester Tuition Buffer"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t(language, "targetAmount")}</label>
+                <input
+                  type="number"
+                  step="1"
+                  required
+                  placeholder="e.g. 20000"
+                  value={targetRupees}
+                  onChange={(e) => setTargetRupees(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t(language, "targetDate")}</label>
+                <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t(language, "category")}</label>
+                <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                  <option value="Emergency Fund">Emergency Fund</option>
+                  <option value="Education">College / Tuition Fees</option>
+                  <option value="Gadgets">Laptop / Device</option>
+                  <option value="Certification">Skill Certification</option>
+                  <option value="Travel">Family / Travel</option>
+                </select>
+              </div>
+            </div>
+
+            <ClickSpark sparkColor="#047857" sparkCount={5}>
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                {loading ? "…" : t(language, "setGoalBtn")}
+              </button>
+            </ClickSpark>
+          </form>
         </div>
-
-        <form onSubmit={handleCreateGoal}>
-          <div className="form-grid">
-            <div className="form-group">
-              <label className="form-label">{t(language, "goalTitle")}</label>
-              <input
-                required
-                placeholder="e.g. Next Semester Tuition Buffer"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">{t(language, "targetAmount")}</label>
-              <input
-                type="number"
-                step="1"
-                required
-                placeholder="e.g. 20000"
-                value={targetRupees}
-                onChange={(e) => setTargetRupees(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">{t(language, "targetDate")}</label>
-              <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">{t(language, "category")}</label>
-              <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                <option value="Emergency Fund">Emergency Fund</option>
-                <option value="Education">College / Tuition Fees</option>
-                <option value="Gadgets">Laptop / Device</option>
-                <option value="Certification">Skill Certification</option>
-                <option value="Travel">Family / Travel</option>
-              </select>
-            </div>
-          </div>
-
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? "…" : t(language, "setGoalBtn")}
-          </button>
-        </form>
-      </div>
+      </AnimatedContent>
 
       {/* Goal Cards Grid */}
-      <div className="card">
-        <div className="card-header">
-          <div className="card-title">{t(language, "yourMilestones")}</div>
-        </div>
-
-        {goals.length === 0 ? (
-          <p style={{ color: "var(--text-muted)", padding: "16px 0" }}>
-            No savings goals currently active. Create your first goal above!
-          </p>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
-            {goals.map((g) => (
-              <div key={g.id} className="card" style={{ marginBottom: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div>
-                    <strong style={{ fontSize: "1.1rem" }}>{g.name}</strong>
-                    <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{g.category}</div>
-                  </div>
-                  <span className={`badge ${g.is_completed ? "badge-eligible" : "badge-agency"}`}>
-                    {g.is_completed ? t(language, "achieved") : `${g.percent}%`}
-                  </span>
-                </div>
-
-                <div className="progress-bar-container">
-                  <div
-                    className={`progress-bar-fill ${g.is_completed ? "progress-ok" : "progress-ok"}`}
-                    style={{ width: `${g.percent}%` }}
-                  />
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", fontWeight: "600" }}>
-                  <span>{t(language, "saved")}: {formatINR(g.saved_minor)}</span>
-                  <span>{t(language, "target")}: {formatINR(g.target_minor)}</span>
-                </div>
-
-                {g.monthly_recommended_minor && !g.is_completed && (
-                  <div style={{ fontSize: "0.78rem", color: "var(--primary)", marginTop: "6px" }}>
-                    Save <strong>{formatINR(g.monthly_recommended_minor)}/month</strong> to reach goal by {g.target_date}.
-                  </div>
-                )}
-
-                {!g.is_completed && (
-                  <div style={{ display: "flex", gap: "8px", marginTop: "14px" }}>
-                    <input
-                      type="number"
-                      step="1"
-                      placeholder="Amount ₹…"
-                      aria-label="Contribution amount in Rupees"
-                      value={depositAmounts[g.id] || ""}
-                      onChange={(e) => setDepositAmounts({ ...depositAmounts, [g.id]: e.target.value })}
-                    />
-                    <button className="btn btn-secondary btn-sm" onClick={() => handleContribute(g.id)}>
-                      {t(language, "depositBtn")}
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+      <AnimatedContent distance={16} delay={0.1} duration={0.3}>
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title">{t(language, "yourMilestones")}</div>
           </div>
-        )}
-      </div>
+
+          {goals.length === 0 ? (
+            <p style={{ color: "var(--text-muted)", padding: "16px 0" }}>
+              No savings goals currently active. Create your first goal above!
+            </p>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
+              {goals.map((g) => (
+                <SpotlightCard
+                  key={g.id}
+                  spotlightColor="rgba(4, 120, 87, 0.08)"
+                  spotlightSize={240}
+                  style={{ borderRadius: "var(--radius-lg)", marginBottom: 0 }}
+                >
+                  <div className="card" style={{ marginBottom: 0, height: "100%" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <strong style={{ fontSize: "1.1rem" }}>{g.name}</strong>
+                        <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{g.category}</div>
+                      </div>
+                      <span className={`badge ${g.is_completed ? "badge-eligible" : "badge-agency"}`}>
+                        {g.is_completed ? t(language, "achieved") : `${g.percent}%`}
+                      </span>
+                    </div>
+
+                    <div className="progress-bar-container">
+                      <div
+                        className={`progress-bar-fill ${g.is_completed ? "progress-ok" : "progress-ok"}`}
+                        style={{ width: `${g.percent}%` }}
+                      />
+                    </div>
+
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", fontWeight: "600" }}>
+                      <span>
+                        {t(language, "saved")}:{" "}
+                        <CountUp to={toRupees(g.saved_minor)} prefix="₹" decimals={2} duration={0.4} />
+                      </span>
+                      <span>
+                        {t(language, "target")}:{" "}
+                        <CountUp to={toRupees(g.target_minor)} prefix="₹" decimals={2} duration={0.4} />
+                      </span>
+                    </div>
+
+                    {g.monthly_recommended_minor && !g.is_completed && (
+                      <div style={{ fontSize: "0.78rem", color: "var(--primary)", marginTop: "6px" }}>
+                        Save <strong>{formatINR(g.monthly_recommended_minor)}/month</strong> to reach goal by {g.target_date}.
+                      </div>
+                    )}
+
+                    {!g.is_completed && (
+                      <div style={{ display: "flex", gap: "8px", marginTop: "14px" }}>
+                        <input
+                          type="number"
+                          step="1"
+                          placeholder="Amount ₹…"
+                          aria-label="Contribution amount in Rupees"
+                          value={depositAmounts[g.id] || ""}
+                          onChange={(e) => setDepositAmounts({ ...depositAmounts, [g.id]: e.target.value })}
+                        />
+                        <ClickSpark sparkColor="#047857" sparkCount={5}>
+                          <button className="btn btn-secondary btn-sm" onClick={() => handleContribute(g.id)}>
+                            {t(language, "depositBtn")}
+                          </button>
+                        </ClickSpark>
+                      </div>
+                    )}
+                  </div>
+                </SpotlightCard>
+              ))}
+            </div>
+          )}
+        </div>
+      </AnimatedContent>
     </div>
   );
 }
@@ -1623,9 +1690,11 @@ function SchemesView({ session, language }: { session: UserSession; language: La
   const [schemes, setSchemes] = useState<any[]>([]);
   const [evaluating, setEvaluating] = useState(false);
   const [expandedCode, setExpandedCode] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const runEvaluation = async () => {
     setEvaluating(true);
+    setFeedback(null);
     try {
       const res = await api("/schemes/eligibility", {
         method: "POST",
@@ -1641,7 +1710,7 @@ function SchemesView({ session, language }: { session: UserSession; language: La
       });
       setSchemes(res);
     } catch (err: any) {
-      alert(err.message || "Failed to evaluate scheme eligibility.");
+      setFeedback({ type: "error", text: err.message || "Failed to evaluate scheme eligibility." });
     } finally {
       setEvaluating(false);
     }
@@ -1654,179 +1723,203 @@ function SchemesView({ session, language }: { session: UserSession; language: La
   return (
     <div>
       {/* Criteria Profiler Card */}
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <div className="card-title">{t(language, "schemeMatcher")}</div>
-            <div className="card-description">{t(language, "schemeSubtitle")}</div>
+      <AnimatedContent distance={16} duration={0.3}>
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <div className="card-title">{t(language, "schemeMatcher")}</div>
+              <div className="card-description">{t(language, "schemeSubtitle")}</div>
+            </div>
           </div>
+
+          {feedback && (
+            <div className={`alert-banner alert-${feedback.type === "success" ? "success" : "danger"}`} style={{ marginBottom: "16px" }}>
+              {feedback.type === "success" ? (
+                <CheckCircle2 aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
+              ) : (
+                <AlertCircle aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
+              )}
+              <div>{feedback.text}</div>
+            </div>
+          )}
+
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label">{t(language, "age")}</label>
+              <input
+                type="number"
+                value={profile.age}
+                onChange={(e) => setProfile({ ...profile, age: e.target.value })}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">{t(language, "currentlyStudent")}</label>
+              <select
+                value={profile.is_student}
+                onChange={(e) => setProfile({ ...profile, is_student: e.target.value })}
+              >
+                <option value="yes">{t(language, "yes")}</option>
+                <option value="no">{t(language, "no")}</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">{t(language, "annualIncome")}</label>
+              <input
+                type="number"
+                value={profile.annual_family_income}
+                onChange={(e) => setProfile({ ...profile, annual_family_income: e.target.value })}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">{t(language, "socialCategory")}</label>
+              <select
+                value={profile.social_category}
+                onChange={(e) => setProfile({ ...profile, social_category: e.target.value })}
+              >
+                <option value="GEN">General (GEN)</option>
+                <option value="OBC">OBC</option>
+                <option value="SC">SC</option>
+                <option value="ST">ST</option>
+                <option value="EWS">EWS</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">{t(language, "stateDomicile")}</label>
+              <input
+                value={profile.state}
+                onChange={(e) => setProfile({ ...profile, state: e.target.value })}
+                placeholder="e.g. Karnataka"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">{t(language, "hasBank")}</label>
+              <select
+                value={profile.has_bank_account}
+                onChange={(e) => setProfile({ ...profile, has_bank_account: e.target.value })}
+              >
+                <option value="yes">{t(language, "yes")}</option>
+                <option value="no">{t(language, "no")}</option>
+              </select>
+            </div>
+          </div>
+
+          <ClickSpark sparkColor="#047857" sparkCount={5}>
+            <button className="btn btn-primary" onClick={runEvaluation} disabled={evaluating}>
+              {evaluating ? t(language, "evaluatingBtn") : t(language, "checkEligibilityBtn")}
+            </button>
+          </ClickSpark>
         </div>
-
-        <div className="form-grid">
-          <div className="form-group">
-            <label className="form-label">{t(language, "age")}</label>
-            <input
-              type="number"
-              value={profile.age}
-              onChange={(e) => setProfile({ ...profile, age: e.target.value })}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">{t(language, "currentlyStudent")}</label>
-            <select
-              value={profile.is_student}
-              onChange={(e) => setProfile({ ...profile, is_student: e.target.value })}
-            >
-              <option value="yes">{t(language, "yes")}</option>
-              <option value="no">{t(language, "no")}</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">{t(language, "annualIncome")}</label>
-            <input
-              type="number"
-              value={profile.annual_family_income}
-              onChange={(e) => setProfile({ ...profile, annual_family_income: e.target.value })}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">{t(language, "socialCategory")}</label>
-            <select
-              value={profile.social_category}
-              onChange={(e) => setProfile({ ...profile, social_category: e.target.value })}
-            >
-              <option value="GEN">General (GEN)</option>
-              <option value="OBC">OBC</option>
-              <option value="SC">SC</option>
-              <option value="ST">ST</option>
-              <option value="EWS">EWS</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">{t(language, "stateDomicile")}</label>
-            <input
-              value={profile.state}
-              onChange={(e) => setProfile({ ...profile, state: e.target.value })}
-              placeholder="e.g. Karnataka"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">{t(language, "hasBank")}</label>
-            <select
-              value={profile.has_bank_account}
-              onChange={(e) => setProfile({ ...profile, has_bank_account: e.target.value })}
-            >
-              <option value="yes">{t(language, "yes")}</option>
-              <option value="no">{t(language, "no")}</option>
-            </select>
-          </div>
-        </div>
-
-        <button className="btn btn-primary" onClick={runEvaluation} disabled={evaluating}>
-          {evaluating ? t(language, "evaluatingBtn") : t(language, "checkEligibilityBtn")}
-        </button>
-      </div>
+      </AnimatedContent>
 
       {/* Matched Schemes List */}
-      <div>
-        <h3 style={{ fontSize: "1.1rem", fontWeight: "700", marginBottom: "14px" }}>
-          {t(language, "evaluatedSchemes")} ({schemes.filter((s) => s.eligible).length} {t(language, "likelyEligibleCount")})
-        </h3>
+      <AnimatedContent distance={16} delay={0.1} duration={0.3}>
+        <div>
+          <h3 style={{ fontSize: "1.1rem", fontWeight: "700", marginBottom: "14px" }}>
+            {t(language, "evaluatedSchemes")} ({schemes.filter((s) => s.eligible).length} {t(language, "likelyEligibleCount")})
+          </h3>
 
-        {schemes.map((s) => {
-          const isExpanded = expandedCode === s.code;
-          const displayTitle = language === "kn" && s.title_kn ? s.title_kn : language === "hi" && s.title_hi ? s.title_hi : s.title_en;
+          {schemes.map((s) => {
+            const isExpanded = expandedCode === s.code;
+            const displayTitle = language === "kn" && s.title_kn ? s.title_kn : language === "hi" && s.title_hi ? s.title_hi : s.title_en;
 
-          return (
-            <div key={s.code} className={`scheme-card ${s.eligible ? "eligible" : "ineligible"}`}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "8px" }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                    <h4 style={{ fontSize: "1.15rem", fontWeight: "800" }}>{displayTitle}</h4>
-                    <span className="badge badge-agency">{s.category}</span>
-                    <span className="badge badge-agency">{s.agency}</span>
-                  </div>
-                  <p style={{ fontSize: "0.88rem", color: "var(--text-muted)", marginTop: "4px" }}>{s.summary}</p>
-                </div>
-
-                <span className={`badge ${s.eligible ? "badge-eligible" : "badge-ineligible"}`}>
-                  {s.eligible ? t(language, "likelyEligible") : t(language, "criteriaNotMatched")}
-                </span>
-              </div>
-
-              {/* Explainable Reasons */}
-              <div style={{ marginTop: "12px", background: "var(--bg-subtle)", padding: "10px 14px", borderRadius: "8px" }}>
-                <div style={{ fontSize: "0.8rem", fontWeight: "700", marginBottom: "4px", color: "var(--text-muted)" }}>
-                  EXPLAINABLE EVALUATION CLAUSES:
-                </div>
-                <ul style={{ paddingLeft: "18px", fontSize: "0.85rem", lineHeight: "1.6" }}>
-                  {s.reasons.map((r: string, idx: number) => (
-                    <li key={idx} style={{ color: r.startsWith("Criteria satisfied") ? "var(--color-success)" : "var(--color-warning)" }}>
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Toggle Details Button */}
-              <div style={{ marginTop: "14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => setExpandedCode(isExpanded ? null : s.code)}
-                >
-                  {isExpanded ? t(language, "hideGuide") : t(language, "viewGuide")}
-                </button>
-
-                <a
-                  href={s.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-primary btn-sm"
-                  style={{ textDecoration: "none" }}
-                >
-                  {t(language, "officialPortal")}
-                </a>
-              </div>
-
-              {/* Expandable Application Guide & Document Checklist */}
-              {isExpanded && (
-                <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px solid var(--border-light)" }}>
-                  <div style={{ marginBottom: "12px" }}>
-                    <strong style={{ fontSize: "0.9rem" }}>{t(language, "keyBenefits")}</strong>
-                    <p style={{ fontSize: "0.86rem", color: "var(--text-main)", marginTop: "2px" }}>{s.benefits}</p>
-                  </div>
-
-                  <div style={{ marginBottom: "14px" }}>
-                    <strong style={{ fontSize: "0.9rem" }}>{t(language, "requiredDocs")}</strong>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "8px", marginTop: "6px" }}>
-                      {s.documents_required.map((doc: string, idx: number) => (
-                        <label key={idx} style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "0.85rem", background: "#f8fafc", padding: "6px 10px", borderRadius: "6px", border: "1px solid var(--border-light)" }}>
-                          <input type="checkbox" style={{ width: "16px", height: "16px" }} />
-                          {doc}
-                        </label>
-                      ))}
+            return (
+              <SpotlightCard
+                key={s.code}
+                spotlightColor={s.eligible ? "rgba(4, 120, 87, 0.08)" : "rgba(100, 116, 139, 0.05)"}
+                spotlightSize={280}
+                style={{ borderRadius: "var(--radius-lg)", marginBottom: "14px" }}
+              >
+                <div className={`scheme-card ${s.eligible ? "eligible" : "ineligible"}`} style={{ marginBottom: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "8px" }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                        <h4 style={{ fontSize: "1.15rem", fontWeight: "800" }}>{displayTitle}</h4>
+                        <span className="badge badge-agency">{s.category}</span>
+                        <span className="badge badge-agency">{s.agency}</span>
+                      </div>
+                      <p style={{ fontSize: "0.88rem", color: "var(--text-muted)", marginTop: "4px" }}>{s.summary}</p>
                     </div>
+
+                    <span className={`badge ${s.eligible ? "badge-eligible" : "badge-ineligible"}`}>
+                      {s.eligible ? t(language, "likelyEligible") : t(language, "criteriaNotMatched")}
+                    </span>
                   </div>
 
-                  <div>
-                    <strong style={{ fontSize: "0.9rem" }}>{t(language, "applicationWalkthrough")}</strong>
-                    <ol style={{ paddingLeft: "20px", fontSize: "0.86rem", marginTop: "6px", lineHeight: "1.6" }}>
-                      {s.application_steps.map((step: string, idx: number) => (
-                        <li key={idx} style={{ marginBottom: "4px" }}>{step}</li>
+                  {/* Explainable Reasons */}
+                  <div style={{ marginTop: "12px", background: "var(--bg-subtle)", padding: "10px 14px", borderRadius: "8px" }}>
+                    <div style={{ fontSize: "0.8rem", fontWeight: "700", marginBottom: "4px", color: "var(--text-muted)" }}>
+                      EXPLAINABLE EVALUATION CLAUSES:
+                    </div>
+                    <ul style={{ paddingLeft: "18px", fontSize: "0.85rem", lineHeight: "1.6" }}>
+                      {s.reasons.map((r: string, idx: number) => (
+                        <li key={idx} style={{ color: r.startsWith("Criteria satisfied") ? "var(--color-success)" : "var(--color-warning)" }}>
+                          {r}
+                        </li>
                       ))}
-                    </ol>
+                    </ul>
                   </div>
+
+                  {/* Toggle Details Button */}
+                  <div style={{ marginTop: "14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setExpandedCode(isExpanded ? null : s.code)}
+                    >
+                      {isExpanded ? t(language, "hideGuide") : t(language, "viewGuide")}
+                    </button>
+
+                    <a
+                      href={s.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-primary btn-sm"
+                      style={{ textDecoration: "none" }}
+                    >
+                      {t(language, "officialPortal")}
+                    </a>
+                  </div>
+
+                  {/* Expandable Application Guide & Document Checklist */}
+                  {isExpanded && (
+                    <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px solid var(--border-light)" }}>
+                      <div style={{ marginBottom: "12px" }}>
+                        <strong style={{ fontSize: "0.9rem" }}>{t(language, "keyBenefits")}</strong>
+                        <p style={{ fontSize: "0.86rem", color: "var(--text-main)", marginTop: "2px" }}>{s.benefits}</p>
+                      </div>
+
+                      <div style={{ marginBottom: "14px" }}>
+                        <strong style={{ fontSize: "0.9rem" }}>{t(language, "requiredDocs")}</strong>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "8px", marginTop: "6px" }}>
+                          {s.documents_required.map((doc: string, idx: number) => (
+                            <label key={idx} style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "0.85rem", background: "#f8fafc", padding: "6px 10px", borderRadius: "6px", border: "1px solid var(--border-light)" }}>
+                              <input type="checkbox" style={{ width: "16px", height: "16px" }} />
+                              {doc}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <strong style={{ fontSize: "0.9rem" }}>{t(language, "applicationWalkthrough")}</strong>
+                        <ol style={{ paddingLeft: "20px", fontSize: "0.86rem", marginTop: "6px", lineHeight: "1.6" }}>
+                          {s.application_steps.map((step: string, idx: number) => (
+                            <li key={idx} style={{ marginBottom: "4px" }}>{step}</li>
+                          ))}
+                        </ol>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              </SpotlightCard>
+            );
+          })}
+        </div>
+      </AnimatedContent>
     </div>
   );
 }
@@ -1961,9 +2054,11 @@ function AIAssistantView({ session, language }: { session: UserSession; language
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend(input)}
           />
-          <button className="btn btn-primary" onClick={() => handleSend(input)} disabled={loading}>
-            {t(language, "sendBtn")}
-          </button>
+          <ClickSpark sparkColor="#047857" sparkCount={5}>
+            <button className="btn btn-primary" onClick={() => handleSend(input)} disabled={loading}>
+              {t(language, "sendBtn")}
+            </button>
+          </ClickSpark>
         </div>
       </div>
     </div>
@@ -1992,8 +2087,10 @@ function CalculatorsView({ language }: { language: Language }) {
   const [expenses, setExpenses] = useState("15000");
   const [targetBuffer, setTargetBuffer] = useState("6");
   const [emergencyResult, setEmergencyResult] = useState<any>(null);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const calculateEMI = async () => {
+    setFeedback(null);
     try {
       const res = await api("/calc/emi", {
         method: "POST",
@@ -2001,11 +2098,12 @@ function CalculatorsView({ language }: { language: Language }) {
       });
       setEmiResult(res);
     } catch (e: any) {
-      alert(e.message);
+      setFeedback({ type: "error", text: e.message || "Failed to calculate EMI." });
     }
   };
 
   const calculateSIP = async () => {
+    setFeedback(null);
     try {
       const res = await api("/calc/sip", {
         method: "POST",
@@ -2013,11 +2111,12 @@ function CalculatorsView({ language }: { language: Language }) {
       });
       setSipResult(res);
     } catch (e: any) {
-      alert(e.message);
+      setFeedback({ type: "error", text: e.message || "Failed to calculate SIP." });
     }
   };
 
   const calculateEmergency = async () => {
+    setFeedback(null);
     try {
       const res = await api("/calc/emergency-fund", {
         method: "POST",
@@ -2025,165 +2124,214 @@ function CalculatorsView({ language }: { language: Language }) {
       });
       setEmergencyResult(res);
     } catch (e: any) {
-      alert(e.message);
+      setFeedback({ type: "error", text: e.message || "Failed to calculate Emergency Fund." });
     }
   };
 
   return (
     <div>
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <div className="card-title">{t(language, "calcTitle")}</div>
-            <div className="card-description">{t(language, "calcSubtitle")}</div>
+      <AnimatedContent distance={16} duration={0.3}>
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <div className="card-title">{t(language, "calcTitle")}</div>
+              <div className="card-description">{t(language, "calcSubtitle")}</div>
+            </div>
           </div>
+
+          {feedback && (
+            <div className={`alert-banner alert-${feedback.type === "success" ? "success" : "danger"}`} style={{ marginBottom: "16px" }}>
+              {feedback.type === "success" ? (
+                <CheckCircle2 aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
+              ) : (
+                <AlertCircle aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
+              )}
+              <div>{feedback.text}</div>
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
+            <button
+              className={`btn ${calcType === "emi" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setCalcType("emi")}
+            >
+              {t(language, "loanEmi")}
+            </button>
+            <button
+              className={`btn ${calcType === "sip" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setCalcType("sip")}
+            >
+              {t(language, "sipWealth")}
+            </button>
+            <button
+              className={`btn ${calcType === "emergency" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setCalcType("emergency")}
+            >
+              {t(language, "emergencyFund")}
+            </button>
+          </div>
+
+          {/* EMI Calculator */}
+          {calcType === "emi" && (
+            <div>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label className="form-label">Loan Amount (₹)</label>
+                  <input value={principal} onChange={(e) => setPrincipal(e.target.value)} type="number" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Annual Interest Rate (%)</label>
+                  <input value={rate} onChange={(e) => setRate(e.target.value)} type="number" step="0.1" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Tenure (Months)</label>
+                  <input value={tenureMonths} onChange={(e) => setTenureMonths(e.target.value)} type="number" />
+                </div>
+              </div>
+              <ClickSpark sparkColor="#047857" sparkCount={5}>
+                <button className="btn btn-primary" onClick={calculateEMI}>
+                  {t(language, "calcEmiBtn")}
+                </button>
+              </ClickSpark>
+
+              {emiResult && (
+                <AnimatedContent distance={12} duration={0.3}>
+                  <div className="stats-grid" style={{ marginTop: "20px" }}>
+                    <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={240} style={{ borderRadius: "var(--radius-lg)" }}>
+                      <div className="stat-card" style={{ height: "100%", marginBottom: 0 }}>
+                        <div className="stat-label">Monthly EMI</div>
+                        <div className="stat-value tabular-nums">
+                          <CountUp to={emiResult.monthly_emi} prefix="₹" decimals={2} duration={0.4} />
+                        </div>
+                      </div>
+                    </SpotlightCard>
+                    <SpotlightCard spotlightColor="rgba(220, 38, 38, 0.06)" spotlightSize={240} style={{ borderRadius: "var(--radius-lg)" }}>
+                      <div className="stat-card" style={{ height: "100%", marginBottom: 0 }}>
+                        <div className="stat-label">Total Interest</div>
+                        <div className="stat-value tabular-nums" style={{ color: "var(--color-danger)" }}>
+                          <CountUp to={emiResult.total_interest} prefix="₹" decimals={2} duration={0.4} />
+                        </div>
+                      </div>
+                    </SpotlightCard>
+                    <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={240} style={{ borderRadius: "var(--radius-lg)" }}>
+                      <div className="stat-card" style={{ height: "100%", marginBottom: 0 }}>
+                        <div className="stat-label">Total Payable</div>
+                        <div className="stat-value tabular-nums">
+                          <CountUp to={emiResult.total_payable} prefix="₹" decimals={2} duration={0.4} />
+                        </div>
+                      </div>
+                    </SpotlightCard>
+                  </div>
+                </AnimatedContent>
+              )}
+            </div>
+          )}
+
+          {/* SIP Calculator */}
+          {calcType === "sip" && (
+            <div>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label className="form-label">Monthly Investment (₹)</label>
+                  <input value={sipMonthly} onChange={(e) => setSipMonthly(e.target.value)} type="number" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Expected Return (% p.a.)</label>
+                  <input value={sipRate} onChange={(e) => setSipRate(e.target.value)} type="number" step="0.5" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Duration (Months)</label>
+                  <input value={sipMonths} onChange={(e) => setSipMonths(e.target.value)} type="number" />
+                </div>
+              </div>
+              <ClickSpark sparkColor="#047857" sparkCount={5}>
+                <button className="btn btn-primary" onClick={calculateSIP}>
+                  {t(language, "calcSipBtn")}
+                </button>
+              </ClickSpark>
+
+              {sipResult && (
+                <AnimatedContent distance={12} duration={0.3}>
+                  <div className="stats-grid" style={{ marginTop: "20px" }}>
+                    <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={240} style={{ borderRadius: "var(--radius-lg)" }}>
+                      <div className="stat-card" style={{ height: "100%", marginBottom: 0 }}>
+                        <div className="stat-label">Invested Amount</div>
+                        <div className="stat-value tabular-nums">
+                          <CountUp to={sipResult.total_invested} prefix="₹" decimals={2} duration={0.4} />
+                        </div>
+                      </div>
+                    </SpotlightCard>
+                    <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={240} style={{ borderRadius: "var(--radius-lg)" }}>
+                      <div className="stat-card" style={{ height: "100%", marginBottom: 0 }}>
+                        <div className="stat-label">Estimated Wealth Gain</div>
+                        <div className="stat-value tabular-nums" style={{ color: "var(--color-success)" }}>
+                          +<CountUp to={sipResult.wealth_gain} prefix="₹" decimals={2} duration={0.4} />
+                        </div>
+                      </div>
+                    </SpotlightCard>
+                    <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={240} style={{ borderRadius: "var(--radius-lg)" }}>
+                      <div className="stat-card" style={{ height: "100%", marginBottom: 0 }}>
+                        <div className="stat-label">Total Expected Corpus</div>
+                        <div className="stat-value tabular-nums" style={{ color: "var(--primary)" }}>
+                          <CountUp to={sipResult.future_value} prefix="₹" decimals={2} duration={0.4} />
+                        </div>
+                      </div>
+                    </SpotlightCard>
+                  </div>
+                </AnimatedContent>
+              )}
+            </div>
+          )}
+
+          {/* Emergency Fund Calculator */}
+          {calcType === "emergency" && (
+            <div>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label className="form-label">Monthly Living Expenses (₹)</label>
+                  <input value={expenses} onChange={(e) => setExpenses(e.target.value)} type="number" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Buffer Months</label>
+                  <select value={targetBuffer} onChange={(e) => setTargetBuffer(e.target.value)}>
+                    <option value="3">3 Months (Minimum)</option>
+                    <option value="6">6 Months (Recommended)</option>
+                    <option value="9">9 Months (Conservative)</option>
+                  </select>
+                </div>
+              </div>
+              <ClickSpark sparkColor="#047857" sparkCount={5}>
+                <button className="btn btn-primary" onClick={calculateEmergency}>
+                  {t(language, "calcEmergencyBtn")}
+                </button>
+              </ClickSpark>
+
+              {emergencyResult && (
+                <AnimatedContent distance={12} duration={0.3}>
+                  <div className="stats-grid" style={{ marginTop: "20px" }}>
+                    <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={240} style={{ borderRadius: "var(--radius-lg)" }}>
+                      <div className="stat-card" style={{ height: "100%", marginBottom: 0 }}>
+                        <div className="stat-label">Recommended Reserve</div>
+                        <div className="stat-value tabular-nums" style={{ color: "var(--primary)" }}>
+                          <CountUp to={emergencyResult.recommended_fund} prefix="₹" decimals={2} duration={0.4} />
+                        </div>
+                      </div>
+                    </SpotlightCard>
+                    <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={240} style={{ borderRadius: "var(--radius-lg)" }}>
+                      <div className="stat-card" style={{ height: "100%", marginBottom: 0 }}>
+                        <div className="stat-label">Minimum Safe Reserve</div>
+                        <div className="stat-value tabular-nums">
+                          <CountUp to={emergencyResult.minimum_safe_fund} prefix="₹" decimals={2} duration={0.4} />
+                        </div>
+                      </div>
+                    </SpotlightCard>
+                  </div>
+                </AnimatedContent>
+              )}
+            </div>
+          )}
         </div>
-
-        <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
-          <button
-            className={`btn ${calcType === "emi" ? "btn-primary" : "btn-secondary"}`}
-            onClick={() => setCalcType("emi")}
-          >
-            {t(language, "loanEmi")}
-          </button>
-          <button
-            className={`btn ${calcType === "sip" ? "btn-primary" : "btn-secondary"}`}
-            onClick={() => setCalcType("sip")}
-          >
-            {t(language, "sipWealth")}
-          </button>
-          <button
-            className={`btn ${calcType === "emergency" ? "btn-primary" : "btn-secondary"}`}
-            onClick={() => setCalcType("emergency")}
-          >
-            {t(language, "emergencyFund")}
-          </button>
-        </div>
-
-        {/* EMI Calculator */}
-        {calcType === "emi" && (
-          <div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">Loan Amount (₹)</label>
-                <input value={principal} onChange={(e) => setPrincipal(e.target.value)} type="number" />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Annual Interest Rate (%)</label>
-                <input value={rate} onChange={(e) => setRate(e.target.value)} type="number" step="0.1" />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Tenure (Months)</label>
-                <input value={tenureMonths} onChange={(e) => setTenureMonths(e.target.value)} type="number" />
-              </div>
-            </div>
-            <button className="btn btn-primary" onClick={calculateEMI}>
-              {t(language, "calcEmiBtn")}
-            </button>
-
-            {emiResult && (
-              <div className="stats-grid" style={{ marginTop: "20px" }}>
-                <div className="stat-card">
-                  <div className="stat-label">Monthly EMI</div>
-                  <div className="stat-value">₹{emiResult.monthly_emi}</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-label">Total Interest</div>
-                  <div className="stat-value" style={{ color: "var(--color-danger)" }}>
-                    ₹{emiResult.total_interest}
-                  </div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-label">Total Payable</div>
-                  <div className="stat-value">₹{emiResult.total_payable}</div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* SIP Calculator */}
-        {calcType === "sip" && (
-          <div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">Monthly Investment (₹)</label>
-                <input value={sipMonthly} onChange={(e) => setSipMonthly(e.target.value)} type="number" />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Expected Return (% p.a.)</label>
-                <input value={sipRate} onChange={(e) => setSipRate(e.target.value)} type="number" step="0.5" />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Duration (Months)</label>
-                <input value={sipMonths} onChange={(e) => setSipMonths(e.target.value)} type="number" />
-              </div>
-            </div>
-            <button className="btn btn-primary" onClick={calculateSIP}>
-              {t(language, "calcSipBtn")}
-            </button>
-
-            {sipResult && (
-              <div className="stats-grid" style={{ marginTop: "20px" }}>
-                <div className="stat-card">
-                  <div className="stat-label">Invested Amount</div>
-                  <div className="stat-value">₹{sipResult.total_invested}</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-label">Estimated Wealth Gain</div>
-                  <div className="stat-value" style={{ color: "var(--color-success)" }}>
-                    +₹{sipResult.wealth_gain}
-                  </div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-label">Total Expected Corpus</div>
-                  <div className="stat-value" style={{ color: "var(--primary)" }}>
-                    ₹{sipResult.future_value}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Emergency Fund Calculator */}
-        {calcType === "emergency" && (
-          <div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">Monthly Living Expenses (₹)</label>
-                <input value={expenses} onChange={(e) => setExpenses(e.target.value)} type="number" />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Buffer Months</label>
-                <select value={targetBuffer} onChange={(e) => setTargetBuffer(e.target.value)}>
-                  <option value="3">3 Months (Minimum)</option>
-                  <option value="6">6 Months (Recommended)</option>
-                  <option value="9">9 Months (Conservative)</option>
-                </select>
-              </div>
-            </div>
-            <button className="btn btn-primary" onClick={calculateEmergency}>
-              {t(language, "calcEmergencyBtn")}
-            </button>
-
-            {emergencyResult && (
-              <div className="stats-grid" style={{ marginTop: "20px" }}>
-                <div className="stat-card">
-                  <div className="stat-label">Recommended Reserve</div>
-                  <div className="stat-value" style={{ color: "var(--primary)" }}>
-                    ₹{emergencyResult.recommended_fund}
-                  </div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-label">Minimum Safe Reserve</div>
-                  <div className="stat-value">₹{emergencyResult.minimum_safe_fund}</div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      </AnimatedContent>
     </div>
   );
 }
@@ -2222,88 +2370,99 @@ function LearningView({ language }: { language: Language }) {
 
   return (
     <div>
-      {/* Cyber Fraud Alert Bar */}
-      <div
-        className="alert-banner alert-warning"
-        style={{
-          marginBottom: "20px",
-          display: "flex",
-          alignItems: "flex-start",
-          gap: "12px",
-          padding: "14px 18px",
-          borderRadius: "var(--radius-md)",
-        }}
-      >
-        <ShieldAlert aria-hidden="true" className="w-5 h-5 flex-shrink-0 text-amber-700 mt-0.5" />
-        <div style={{ fontSize: "0.875rem", lineHeight: 1.5, color: "var(--color-warning)" }}>
-          {t(language, "cyberAlert")}
-        </div>
-      </div>
-
-      {error && (
-        <div className="alert-banner alert-danger" style={{ marginBottom: "16px" }}>
-          <AlertCircle aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
-          <div>{error}</div>
-        </div>
-      )}
-
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <div className="card-title">{t(language, "learnTitle")}</div>
-            <div className="card-description">{t(language, "learnSubtitle")}</div>
+      <AnimatedContent distance={16} duration={0.3}>
+        {/* Cyber Fraud Alert Bar */}
+        <div
+          className="alert-banner alert-warning"
+          style={{
+            marginBottom: "20px",
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "12px",
+            padding: "14px 18px",
+            borderRadius: "var(--radius-md)",
+          }}
+        >
+          <ShieldAlert aria-hidden="true" className="w-5 h-5 flex-shrink-0 text-amber-700 mt-0.5" />
+          <div style={{ fontSize: "0.875rem", lineHeight: 1.5, color: "var(--color-warning)" }}>
+            {t(language, "cyberAlert")}
           </div>
         </div>
 
-        {modules.map((m) => {
-          const q = m.quiz && m.quiz.length > 0 ? m.quiz[0] : null;
-          const result = quizResults[m.id];
+        {error && (
+          <div className="alert-banner alert-danger" style={{ marginBottom: "16px" }}>
+            <AlertCircle aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
+            <div>{error}</div>
+          </div>
+        )}
 
-          return (
-            <div key={m.id} className="card" style={{ background: "#fafafa" }}>
-              <span className="badge badge-agency">{m.category}</span>
-              <h3 style={{ fontSize: "1.2rem", fontWeight: "800", marginTop: "8px", marginBottom: "8px" }}>
-                {m.title}
-              </h3>
-              <p style={{ fontSize: "0.92rem", lineHeight: "1.6", color: "var(--text-main)" }}>{m.body}</p>
-
-              {/* Interactive Module Quiz */}
-              {q && (
-                <div style={{ marginTop: "16px", padding: "14px", background: "white", borderRadius: "10px", border: "1px solid var(--border-light)" }}>
-                  <strong style={{ fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <CheckCircle2 aria-hidden="true" className="w-4 h-4 text-emerald-700 flex-shrink-0" />
-                    Knowledge Check: {q.question}
-                  </strong>
-                  <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                    {q.options.map((opt: string, optIdx: number) => (
-                      <label key={optIdx} style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "0.88rem", cursor: "pointer" }}>
-                        <input
-                          type="radio"
-                          name={`quiz-${m.id}`}
-                          checked={quizAnswers[m.id] === optIdx}
-                          onChange={() => setQuizAnswers({ ...quizAnswers, [m.id]: optIdx })}
-                        />
-                        {opt}
-                      </label>
-                    ))}
-                  </div>
-
-                  <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "12px" }}>
-                    <button className="btn btn-secondary btn-sm" onClick={() => handleQuizSubmit(m.id)}>
-                      {t(language, "checkAnswerBtn")}
-                    </button>
-                    {result && (
-                      <span style={{ fontSize: "0.86rem", fontWeight: "700", color: result.is_correct ? "var(--color-success)" : "var(--color-danger)" }}>
-                        {result.is_correct ? "Correct! " : "Incorrect. "} {result.explanation}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <div className="card-title">{t(language, "learnTitle")}</div>
+              <div className="card-description">{t(language, "learnSubtitle")}</div>
             </div>
-          );
-        })}
-      </div>
+          </div>
+
+          {modules.map((m) => {
+            const q = m.quiz && m.quiz.length > 0 ? m.quiz[0] : null;
+            const result = quizResults[m.id];
+
+            return (
+              <SpotlightCard
+                key={m.id}
+                spotlightColor="rgba(4, 120, 87, 0.05)"
+                spotlightSize={260}
+                style={{ borderRadius: "var(--radius-lg)", marginBottom: "16px" }}
+              >
+                <div className="card" style={{ background: "#fafafa", marginBottom: 0 }}>
+                  <span className="badge badge-agency">{m.category}</span>
+                  <h3 style={{ fontSize: "1.2rem", fontWeight: "800", marginTop: "8px", marginBottom: "8px" }}>
+                    {m.title}
+                  </h3>
+                  <p style={{ fontSize: "0.92rem", lineHeight: "1.6", color: "var(--text-main)" }}>{m.body}</p>
+
+                  {/* Interactive Module Quiz */}
+                  {q && (
+                    <div style={{ marginTop: "16px", padding: "14px", background: "white", borderRadius: "10px", border: "1px solid var(--border-light)" }}>
+                      <strong style={{ fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <CheckCircle2 aria-hidden="true" className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+                        Knowledge Check: {q.question}
+                      </strong>
+                      <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                        {q.options.map((opt: string, optIdx: number) => (
+                          <label key={optIdx} style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "0.88rem", cursor: "pointer" }}>
+                            <input
+                              type="radio"
+                              name={`quiz-${m.id}`}
+                              checked={quizAnswers[m.id] === optIdx}
+                              onChange={() => setQuizAnswers({ ...quizAnswers, [m.id]: optIdx })}
+                            />
+                            {opt}
+                          </label>
+                        ))}
+                      </div>
+
+                      <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "12px" }}>
+                        <ClickSpark sparkColor="#047857" sparkCount={5}>
+                          <button className="btn btn-secondary btn-sm" onClick={() => handleQuizSubmit(m.id)}>
+                            {t(language, "checkAnswerBtn")}
+                          </button>
+                        </ClickSpark>
+                        {result && (
+                          <span style={{ fontSize: "0.86rem", fontWeight: "700", color: result.is_correct ? "var(--color-success)" : "var(--color-danger)" }}>
+                            {result.is_correct ? "Correct! " : "Incorrect. "} {result.explanation}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SpotlightCard>
+            );
+          })}
+        </div>
+      </AnimatedContent>
     </div>
   );
 }
@@ -2342,6 +2501,7 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
         body: profile,
       });
       setMsg("Profile details updated successfully.");
+      setTimeout(() => setMsg(""), 4000);
     } catch (err: any) {
       setError(err.message || "Failed to save profile.");
     } finally {
@@ -2360,6 +2520,7 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
       a.download = `finsmart_data_export_${session.user_id}.json`;
       a.click();
       setMsg("Statutory DSAR personal data export downloaded successfully.");
+      setTimeout(() => setMsg(""), 4000);
     } catch (err: any) {
       setError(err.message || "Failed to export data.");
     }
@@ -2379,103 +2540,111 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
 
   return (
     <div>
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <div className="card-title">{t(language, "profileTitle")}</div>
-            <div className="card-description">{t(language, "profileSubtitle")}</div>
+      <AnimatedContent distance={16} duration={0.3}>
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <div className="card-title">{t(language, "profileTitle")}</div>
+              <div className="card-description">{t(language, "profileSubtitle")}</div>
+            </div>
           </div>
+
+          {error && (
+            <div className="alert-banner alert-danger" style={{ marginBottom: "16px" }}>
+              <AlertCircle aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
+              <div>{error}</div>
+            </div>
+          )}
+
+          {msg && (
+            <div className="alert-banner alert-success" style={{ marginBottom: "16px" }}>
+              <CheckCircle2 aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
+              <div>{msg}</div>
+            </div>
+          )}
+
+          <form onSubmit={handleSaveProfile}>
+            <div className="form-grid">
+              <div className="form-group">
+                <label className="form-label">{t(language, "age")}</label>
+                <input
+                  type="number"
+                  value={profile.age || ""}
+                  onChange={(e) => setProfile({ ...profile, age: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t(language, "socialCategory")}</label>
+                <select
+                  value={profile.social_category || "GEN"}
+                  onChange={(e) => setProfile({ ...profile, social_category: e.target.value })}
+                >
+                  <option value="GEN">General (GEN)</option>
+                  <option value="OBC">OBC</option>
+                  <option value="SC">SC</option>
+                  <option value="ST">ST</option>
+                  <option value="EWS">EWS</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t(language, "annualIncome")}</label>
+                <input
+                  type="number"
+                  value={toRupees(profile.annual_family_income_minor || 0)}
+                  onChange={(e) => setProfile({ ...profile, annual_family_income_minor: toPaise(e.target.value) })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t(language, "stateDomicile")}</label>
+                <input
+                  value={profile.state || ""}
+                  onChange={(e) => setProfile({ ...profile, state: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <ClickSpark sparkColor="#047857" sparkCount={5}>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {saving ? "…" : t(language, "updateProfileBtn")}
+              </button>
+            </ClickSpark>
+          </form>
         </div>
-
-        {error && (
-          <div className="alert-banner alert-danger" style={{ marginBottom: "16px" }}>
-            <AlertCircle aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
-            <div>{error}</div>
-          </div>
-        )}
-
-        {msg && (
-          <div className="alert-banner alert-success" style={{ marginBottom: "16px" }}>
-            <CheckCircle2 aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
-            <div>{msg}</div>
-          </div>
-        )}
-
-        <form onSubmit={handleSaveProfile}>
-          <div className="form-grid">
-            <div className="form-group">
-              <label className="form-label">{t(language, "age")}</label>
-              <input
-                type="number"
-                value={profile.age || ""}
-                onChange={(e) => setProfile({ ...profile, age: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">{t(language, "socialCategory")}</label>
-              <select
-                value={profile.social_category || "GEN"}
-                onChange={(e) => setProfile({ ...profile, social_category: e.target.value })}
-              >
-                <option value="GEN">General (GEN)</option>
-                <option value="OBC">OBC</option>
-                <option value="SC">SC</option>
-                <option value="ST">ST</option>
-                <option value="EWS">EWS</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">{t(language, "annualIncome")}</label>
-              <input
-                type="number"
-                value={toRupees(profile.annual_family_income_minor || 0)}
-                onChange={(e) => setProfile({ ...profile, annual_family_income_minor: toPaise(e.target.value) })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">{t(language, "stateDomicile")}</label>
-              <input
-                value={profile.state || ""}
-                onChange={(e) => setProfile({ ...profile, state: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? "…" : t(language, "updateProfileBtn")}
-          </button>
-        </form>
-      </div>
+      </AnimatedContent>
 
       {/* DPDP Act 2023 Consent Ledger & Data Rights Card */}
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <div className="card-title">{t(language, "dpdpRights")}</div>
-            <div className="card-description">{t(language, "dpdpSubtitle")}</div>
+      <AnimatedContent distance={16} delay={0.1} duration={0.3}>
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <div className="card-title">{t(language, "dpdpRights")}</div>
+              <div className="card-description">{t(language, "dpdpSubtitle")}</div>
+            </div>
           </div>
-        </div>
 
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "16px" }}>
-          <button className="btn btn-secondary" onClick={handleDownloadDSAR}>
-            {t(language, "downloadDSAR")}
-          </button>
-          <button className="btn btn-danger" onClick={handleErasure}>
-            {t(language, "erasureBtn")}
-          </button>
-        </div>
-
-        <h4 style={{ fontSize: "0.95rem", fontWeight: "700", marginBottom: "8px" }}>{t(language, "activeConsents")}</h4>
-        {consents.map((c) => (
-          <div key={c.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border-light)", fontSize: "0.85rem" }}>
-            <span>Purpose: <strong>{c.purpose}</strong></span>
-            <span className="badge badge-eligible">Granted on {c.at.substring(0, 10)}</span>
+          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "16px" }}>
+            <ClickSpark sparkColor="#047857" sparkCount={5}>
+              <button className="btn btn-secondary" onClick={handleDownloadDSAR}>
+                {t(language, "downloadDSAR")}
+              </button>
+            </ClickSpark>
+            <button className="btn btn-danger" onClick={handleErasure}>
+              {t(language, "erasureBtn")}
+            </button>
           </div>
-        ))}
-      </div>
+
+          <h4 style={{ fontSize: "0.95rem", fontWeight: "700", marginBottom: "8px" }}>{t(language, "activeConsents")}</h4>
+          {consents.map((c) => (
+            <div key={c.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border-light)", fontSize: "0.85rem" }}>
+              <span>Purpose: <strong>{c.purpose}</strong></span>
+              <span className="badge badge-eligible">Granted on {c.at.substring(0, 10)}</span>
+            </div>
+          ))}
+        </div>
+      </AnimatedContent>
     </div>
   );
 }
@@ -2491,45 +2660,63 @@ function AdminView({ session, language }: { session: UserSession; language: Lang
   }, []);
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <div>
-          <div className="card-title" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Building2 aria-hidden="true" className="w-5 h-5 text-emerald-700" />
-            {t(language, "navAdmin")}
+    <AnimatedContent distance={16} duration={0.3}>
+      <div className="card">
+        <div className="card-header">
+          <div>
+            <div className="card-title" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Building2 aria-hidden="true" className="w-5 h-5 text-emerald-700" />
+              {t(language, "navAdmin")}
+            </div>
+            <div className="card-description">
+              Aggregated, privacy-preserving participation metrics
+            </div>
           </div>
-          <div className="card-description">
-            Aggregated, privacy-preserving participation metrics
-          </div>
+          <span className="badge badge-eligible">Zero Personal PII Exposed</span>
         </div>
-        <span className="badge badge-eligible">Zero Personal PII Exposed</span>
+
+        {stats ? (
+          <div className="stats-grid">
+            <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={240} style={{ borderRadius: "var(--radius-lg)", height: "100%" }}>
+              <div className="stat-card" style={{ height: "100%", marginBottom: 0 }}>
+                <div className="stat-label">Enrolled Users</div>
+                <div className="stat-value tabular-nums">
+                  <CountUp to={stats.total_users} duration={0.4} />
+                </div>
+              </div>
+            </SpotlightCard>
+
+            <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={240} style={{ borderRadius: "var(--radius-lg)", height: "100%" }}>
+              <div className="stat-card" style={{ height: "100%", marginBottom: 0 }}>
+                <div className="stat-label">Transactions Recorded</div>
+                <div className="stat-value tabular-nums">
+                  <CountUp to={stats.total_transactions} duration={0.4} />
+                </div>
+              </div>
+            </SpotlightCard>
+
+            <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={240} style={{ borderRadius: "var(--radius-lg)", height: "100%" }}>
+              <div className="stat-card" style={{ height: "100%", marginBottom: 0 }}>
+                <div className="stat-label">Total Volume Tracked</div>
+                <div className="stat-value tabular-nums">
+                  <CountUp to={toRupees(stats.total_volume_minor)} prefix="₹" decimals={2} duration={0.4} />
+                </div>
+              </div>
+            </SpotlightCard>
+
+            <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={240} style={{ borderRadius: "var(--radius-lg)", height: "100%" }}>
+              <div className="stat-card" style={{ height: "100%", marginBottom: 0 }}>
+                <div className="stat-label">Active Savings Goals</div>
+                <div className="stat-value tabular-nums">
+                  <CountUp to={stats.total_goals} duration={0.4} />
+                </div>
+              </div>
+            </SpotlightCard>
+          </div>
+        ) : (
+          <p>Loading analytics…</p>
+        )}
       </div>
-
-      {stats ? (
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-label">Enrolled Users</div>
-            <div className="stat-value">{stats.total_users}</div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-label">Transactions Recorded</div>
-            <div className="stat-value">{stats.total_transactions}</div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-label">Total Volume Tracked</div>
-            <div className="stat-value">{formatINR(stats.total_volume_minor)}</div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-label">Active Savings Goals</div>
-            <div className="stat-value">{stats.total_goals}</div>
-          </div>
-        </div>
-      ) : (
-        <p>Loading analytics…</p>
-      )}
-    </div>
+    </AnimatedContent>
   );
 }
