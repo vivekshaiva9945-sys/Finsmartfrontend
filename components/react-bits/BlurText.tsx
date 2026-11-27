@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useRef, useId, useEffect } from "react";
-import { motion, useInView } from "framer-motion";
+import React, { useRef } from "react";
+import { motion, useInView, useReducedMotion } from "framer-motion";
+import { motionTokens } from "../../lib/motion";
 
 interface BlurTextProps {
   text: string;
@@ -20,32 +21,42 @@ interface BlurTextProps {
 
 export const BlurText: React.FC<BlurTextProps> = ({
   text = "",
-  delay = 50,
+  delay = 40,
   className = "",
-  animateBy = "words",
+  animateBy = "words", // Word-level splitting ensures Kannada and Hindi conjuncts never break
   direction = "top",
   threshold = 0.1,
   rootMargin = "0px",
   animationFrom,
   animationTo,
-  easing = "easeOut",
+  easing,
   onAnimationComplete,
   style = {},
 }) => {
+  const shouldReduceMotion = useReducedMotion();
   const elements = animateBy === "words" ? text.split(" ") : text.split("");
-  const ref = useRef<HTMLParagraphElement>(null);
+  const ref = useRef<HTMLHeadingElement>(null);
   const inView = useInView(ref, { once: true, margin: rootMargin as any });
+
+  // If user prefers reduced motion, render immediate accessible text without blur or transform
+  if (shouldReduceMotion) {
+    return (
+      <span ref={ref} className={className} style={{ display: "inline-block", ...style }}>
+        {text}
+      </span>
+    );
+  }
 
   const defaultFrom =
     direction === "top"
-      ? { filter: "blur(10px)", opacity: 0, y: -20 }
-      : { filter: "blur(10px)", opacity: 0, y: 20 };
+      ? { filter: "blur(6px)", opacity: 0, y: -10 }
+      : { filter: "blur(6px)", opacity: 0, y: 10 };
 
   const defaultTo = [
     {
-      filter: "blur(5px)",
-      opacity: 0.5,
-      y: direction === "top" ? 3 : -3,
+      filter: "blur(2px)",
+      opacity: 0.7,
+      y: direction === "top" ? 2 : -2,
     },
     { filter: "blur(0px)", opacity: 1, y: 0 },
   ];
@@ -54,20 +65,22 @@ export const BlurText: React.FC<BlurTextProps> = ({
   const toSnapshots = animationTo || defaultTo;
 
   return (
-    <p
+    <span
       ref={ref}
+      aria-label={text}
       className={`blur-text ${className}`}
-      style={{ display: "flex", flexWrap: "wrap", ...style }}
+      style={{ display: "inline-flex", flexWrap: "wrap", ...style }}
     >
       {elements.map((element, index) => (
         <motion.span
           key={index}
+          aria-hidden="true"
           initial={fromSnapshot}
           animate={inView ? toSnapshots[toSnapshots.length - 1] : fromSnapshot}
           transition={{
-            duration: 0.35,
+            duration: motionTokens.duration.medium,
             delay: (index * delay) / 1000,
-            ease: easing as any,
+            ease: (easing as any) || motionTokens.ease.civicOut,
           }}
           onAnimationComplete={
             index === elements.length - 1 ? onAnimationComplete : undefined
@@ -81,7 +94,7 @@ export const BlurText: React.FC<BlurTextProps> = ({
           {element === " " ? "\u00A0" : element}
         </motion.span>
       ))}
-    </p>
+    </span>
   );
 };
 

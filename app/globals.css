@@ -863,3 +863,28 @@ button, a, select, input, textarea {
   }
 }
 
+/* Micro-interaction animations */
+@keyframes sparkFade {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--spark-tx, 0px)), calc(-50% + var(--spark-ty, 0px))) scale(0.2);
+  }
+}
+
+@keyframes shinySweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shiny {
+  animation: shinySweep 4s infinite linear;
+}
+

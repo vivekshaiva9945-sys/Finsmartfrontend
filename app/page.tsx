@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { api, formatINR, getTenantSlug, setTenantSlug, toPaise, toRupees } from "../lib/api";
 import { Language, t } from "../lib/i18n";
-import { CountUp, AnimatedContent } from "../components/react-bits";
+import { CountUp, AnimatedContent, BlurText, ClickSpark, DotGrid, ShinyText, SpotlightCard } from "../components/react-bits";
 import {
   LayoutDashboard,
   PieChart,
@@ -570,12 +570,13 @@ function AuthView({
   };
 
   return (
-    <div style={{ minHeight: "520px", display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 16px" }}>
+    <div style={{ minHeight: "520px", display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 16px", position: "relative", overflow: "hidden" }}>
+      <DotGrid dotColor="rgba(4, 120, 87, 0.05)" spacing={28} dotSize={1.5} />
       <AnimatedContent
         distance={20}
         direction="vertical"
         duration={0.3}
-        style={{ width: "100%", maxWidth: "440px" }}
+        style={{ width: "100%", maxWidth: "440px", position: "relative", zIndex: 1 }}
       >
         <div
           className="ledger-card"
@@ -589,7 +590,7 @@ function AuthView({
         >
           <div style={{ marginBottom: "6px" }}>
             <h1 style={{ fontSize: "1.5rem", fontWeight: "700", color: "var(--text-main)", letterSpacing: "-0.02em", margin: 0 }}>
-              {mode === "login" ? t(language, "welcomeBack") : t(language, "createAccount")}
+              <BlurText text={mode === "login" ? t(language, "welcomeBack") : t(language, "createAccount")} animateBy="words" delay={25} />
             </h1>
           </div>
           <p className="card-description" style={{ marginBottom: "24px", color: "var(--text-secondary)", fontSize: "0.875rem", lineHeight: 1.5 }}>
@@ -708,7 +709,9 @@ function AuthView({
               }}
               disabled={loading}
             >
-              {loading ? "…" : mode === "login" ? t(language, "signInBtn") : t(language, "registerBtn")}
+              <ShinyText speed={4} disabled={loading}>
+                {loading ? "…" : mode === "login" ? t(language, "signInBtn") : t(language, "registerBtn")}
+              </ShinyText>
             </button>
 
             {mode === "login" && (
@@ -888,105 +891,113 @@ function DashboardView({ session, language }: { session: UserSession; language: 
       {/* 4-Metric Overview Cards with Staggered Entrance and CountUp */}
       <div className="stats-grid">
         <AnimatedContent distance={16} delay={0} duration={0.3}>
-          <div
-            className="stat-card"
-            style={{
-              backgroundColor: "#ffffff",
-              border: "1.5px solid var(--primary-border)",
-              borderRadius: "var(--radius-lg)",
-              padding: "20px",
-              boxShadow: "var(--shadow-sm)",
-              height: "100%",
-            }}
-          >
-            <div className="stat-label" style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>{t(language, "netBalance")}</div>
-            <div className="stat-value tabular-nums" style={{ fontSize: "1.875rem", fontWeight: 700, color: "var(--text-main)", letterSpacing: "-0.02em", margin: "6px 0" }}>
-              <CountUp
-                to={toRupees(summary ? summary.balance_minor : 0)}
-                prefix="₹"
-                decimals={2}
-                duration={0.5}
-              />
+          <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={260} style={{ borderRadius: "var(--radius-lg)", height: "100%" }}>
+            <div
+              className="stat-card"
+              style={{
+                backgroundColor: "#ffffff",
+                border: "1.5px solid var(--primary-border)",
+                borderRadius: "var(--radius-lg)",
+                padding: "20px",
+                boxShadow: "var(--shadow-sm)",
+                height: "100%",
+              }}
+            >
+              <div className="stat-label" style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>{t(language, "netBalance")}</div>
+              <div className="stat-value tabular-nums" style={{ fontSize: "1.875rem", fontWeight: 700, color: "var(--text-main)", letterSpacing: "-0.02em", margin: "6px 0" }}>
+                <CountUp
+                  to={toRupees(summary ? summary.balance_minor : 0)}
+                  prefix="₹"
+                  decimals={2}
+                  duration={0.5}
+                />
+              </div>
+              <div className="stat-subtext" style={{ fontSize: "0.8125rem", color: "var(--text-muted)" }}>{t(language, "cumulativeCashflow")}</div>
             </div>
-            <div className="stat-subtext" style={{ fontSize: "0.8125rem", color: "var(--text-muted)" }}>{t(language, "cumulativeCashflow")}</div>
-          </div>
+          </SpotlightCard>
         </AnimatedContent>
 
         <AnimatedContent distance={16} delay={0.06} duration={0.3}>
-          <div
-            className="stat-card"
-            style={{
-              backgroundColor: "#ffffff",
-              border: "1px solid var(--border-light)",
-              borderRadius: "var(--radius-lg)",
-              padding: "20px",
-              boxShadow: "var(--shadow-sm)",
-              height: "100%",
-            }}
-          >
-            <div className="stat-label" style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>{t(language, "monthlyIncome")}</div>
-            <div className="stat-value tabular-nums" style={{ fontSize: "1.875rem", fontWeight: 700, color: "var(--color-success)", letterSpacing: "-0.02em", margin: "6px 0" }}>
-              <CountUp
-                to={toRupees(summary ? summary.income_minor : 0)}
-                prefix="+₹"
-                decimals={2}
-                duration={0.5}
-              />
+          <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={260} style={{ borderRadius: "var(--radius-lg)", height: "100%" }}>
+            <div
+              className="stat-card"
+              style={{
+                backgroundColor: "#ffffff",
+                border: "1px solid var(--border-light)",
+                borderRadius: "var(--radius-lg)",
+                padding: "20px",
+                boxShadow: "var(--shadow-sm)",
+                height: "100%",
+              }}
+            >
+              <div className="stat-label" style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>{t(language, "monthlyIncome")}</div>
+              <div className="stat-value tabular-nums" style={{ fontSize: "1.875rem", fontWeight: 700, color: "var(--color-success)", letterSpacing: "-0.02em", margin: "6px 0" }}>
+                <CountUp
+                  to={toRupees(summary ? summary.income_minor : 0)}
+                  prefix="+₹"
+                  decimals={2}
+                  duration={0.5}
+                />
+              </div>
+              <div className="stat-subtext positive" style={{ fontSize: "0.8125rem" }}>{t(language, "totalCredits")}</div>
             </div>
-            <div className="stat-subtext positive" style={{ fontSize: "0.8125rem" }}>{t(language, "totalCredits")}</div>
-          </div>
+          </SpotlightCard>
         </AnimatedContent>
 
         <AnimatedContent distance={16} delay={0.12} duration={0.3}>
-          <div
-            className="stat-card"
-            style={{
-              backgroundColor: "#ffffff",
-              border: "1px solid var(--border-light)",
-              borderRadius: "var(--radius-lg)",
-              padding: "20px",
-              boxShadow: "var(--shadow-sm)",
-              height: "100%",
-            }}
-          >
-            <div className="stat-label" style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>{t(language, "monthlyExpenses")}</div>
-            <div className="stat-value tabular-nums" style={{ fontSize: "1.875rem", fontWeight: 700, color: "var(--color-danger)", letterSpacing: "-0.02em", margin: "6px 0" }}>
-              <CountUp
-                to={toRupees(summary ? summary.expense_minor : 0)}
-                prefix="-₹"
-                decimals={2}
-                duration={0.5}
-              />
+          <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={260} style={{ borderRadius: "var(--radius-lg)", height: "100%" }}>
+            <div
+              className="stat-card"
+              style={{
+                backgroundColor: "#ffffff",
+                border: "1px solid var(--border-light)",
+                borderRadius: "var(--radius-lg)",
+                padding: "20px",
+                boxShadow: "var(--shadow-sm)",
+                height: "100%",
+              }}
+            >
+              <div className="stat-label" style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>{t(language, "monthlyExpenses")}</div>
+              <div className="stat-value tabular-nums" style={{ fontSize: "1.875rem", fontWeight: 700, color: "var(--color-danger)", letterSpacing: "-0.02em", margin: "6px 0" }}>
+                <CountUp
+                  to={toRupees(summary ? summary.expense_minor : 0)}
+                  prefix="-₹"
+                  decimals={2}
+                  duration={0.5}
+                />
+              </div>
+              <div className="stat-subtext negative" style={{ fontSize: "0.8125rem" }}>{t(language, "totalDebits")}</div>
             </div>
-            <div className="stat-subtext negative" style={{ fontSize: "0.8125rem" }}>{t(language, "totalDebits")}</div>
-          </div>
+          </SpotlightCard>
         </AnimatedContent>
 
         <AnimatedContent distance={16} delay={0.18} duration={0.3}>
-          <div
-            className="stat-card"
-            style={{
-              backgroundColor: "#ffffff",
-              border: "1px solid var(--border-light)",
-              borderRadius: "var(--radius-lg)",
-              padding: "20px",
-              boxShadow: "var(--shadow-sm)",
-              height: "100%",
-            }}
-          >
-            <div className="stat-label" style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>{t(language, "savingsRate")}</div>
-            <div className="stat-value tabular-nums" style={{ fontSize: "1.875rem", fontWeight: 700, color: "var(--text-main)", letterSpacing: "-0.02em", margin: "6px 0" }}>
-              <CountUp
-                to={summary ? summary.savings_rate_pct : 0}
-                suffix="%"
-                decimals={1}
-                duration={0.5}
-              />
+          <SpotlightCard spotlightColor="rgba(4, 120, 87, 0.08)" spotlightSize={260} style={{ borderRadius: "var(--radius-lg)", height: "100%" }}>
+            <div
+              className="stat-card"
+              style={{
+                backgroundColor: "#ffffff",
+                border: "1px solid var(--border-light)",
+                borderRadius: "var(--radius-lg)",
+                padding: "20px",
+                boxShadow: "var(--shadow-sm)",
+                height: "100%",
+              }}
+            >
+              <div className="stat-label" style={{ fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>{t(language, "savingsRate")}</div>
+              <div className="stat-value tabular-nums" style={{ fontSize: "1.875rem", fontWeight: 700, color: "var(--text-main)", letterSpacing: "-0.02em", margin: "6px 0" }}>
+                <CountUp
+                  to={summary ? summary.savings_rate_pct : 0}
+                  suffix="%"
+                  decimals={1}
+                  duration={0.5}
+                />
+              </div>
+              <div className={`stat-subtext ${(summary?.savings_rate_pct || 0) >= 20 ? "positive" : "warning"}`} style={{ fontSize: "0.8125rem" }}>
+                {(summary?.savings_rate_pct || 0) >= 20 ? t(language, "healthySavings") : t(language, "targetSavings")}
+              </div>
             </div>
-            <div className={`stat-subtext ${(summary?.savings_rate_pct || 0) >= 20 ? "positive" : "warning"}`} style={{ fontSize: "0.8125rem" }}>
-              {(summary?.savings_rate_pct || 0) >= 20 ? t(language, "healthySavings") : t(language, "targetSavings")}
-            </div>
-          </div>
+          </SpotlightCard>
         </AnimatedContent>
       </div>
 
@@ -1061,24 +1072,26 @@ function DashboardView({ session, language }: { session: UserSession; language: 
                 />
               </div>
 
-              <button
-                type="submit"
-                className="btn btn-primary"
-                style={{
-                  width: "100%",
-                  minHeight: "48px",
-                  fontSize: "0.9375rem",
-                  fontWeight: 600,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                }}
-                disabled={submitting}
-              >
-                <PlusCircle aria-hidden="true" className="w-5 h-5" />
-                {submitting ? "…" : t(language, "addTransactionBtn")}
-              </button>
+              <ClickSpark sparkColor="#047857" sparkCount={5} sparkRadius={24} duration={350} style={{ width: "100%" }}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{
+                    width: "100%",
+                    minHeight: "48px",
+                    fontSize: "0.9375rem",
+                    fontWeight: 600,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                  }}
+                  disabled={submitting}
+                >
+                  <PlusCircle aria-hidden="true" className="w-5 h-5" />
+                  {submitting ? "…" : t(language, "addTransactionBtn")}
+                </button>
+              </ClickSpark>
             </form>
           </div>
         </AnimatedContent>

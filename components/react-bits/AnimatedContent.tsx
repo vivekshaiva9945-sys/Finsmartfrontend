@@ -1,7 +1,8 @@
 "use client";
 
 import React, { ReactNode } from "react";
-import { motion, HTMLMotionProps } from "framer-motion";
+import { motion, HTMLMotionProps, useReducedMotion } from "framer-motion";
+import { motionTokens } from "../../lib/motion";
 
 interface AnimatedContentProps extends HTMLMotionProps<"div"> {
   children: ReactNode;
@@ -15,17 +16,26 @@ interface AnimatedContentProps extends HTMLMotionProps<"div"> {
 
 export const AnimatedContent: React.FC<AnimatedContentProps> = ({
   children,
-  distance = 30,
+  distance = 16,
   direction = "vertical",
   reverse = false,
-  duration = 0.45,
+  duration = motionTokens.duration.medium,
   delay = 0,
   className = "",
   style,
   ...props
 }) => {
+  const shouldReduceMotion = useReducedMotion();
   const axis = direction === "horizontal" ? "x" : "y";
   const startVal = reverse ? -distance : distance;
+
+  if (shouldReduceMotion) {
+    return (
+      <div className={className} style={style as React.CSSProperties}>
+        {children}
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -35,8 +45,9 @@ export const AnimatedContent: React.FC<AnimatedContentProps> = ({
       transition={{
         duration,
         delay,
-        ease: [0.22, 1, 0.36, 1],
+        ease: motionTokens.ease.civicOut,
       }}
+      viewport={{ once: true }}
       className={className}
       style={style}
       {...props}

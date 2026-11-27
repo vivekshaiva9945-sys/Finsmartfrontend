@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useRef, useState, MouseEvent } from "react";
+import React, { useRef, useState, MouseEvent, useEffect } from "react";
+import { motionTokens, isReducedMotionPreferred, isTouchDevice } from "../../lib/motion";
 
 interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
@@ -11,24 +12,32 @@ interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const SpotlightCard: React.FC<SpotlightCardProps> = ({
   children,
-  spotlightColor = "rgba(16, 185, 129, 0.12)",
+  spotlightColor = motionTokens.colors.emeraldSpotlight,
   className = "",
-  spotlightSize = 350,
+  spotlightSize = 300,
   style,
   ...props
 }) => {
   const divRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [opacity, setOpacity] = useState(0);
+  const [enabled, setEnabled] = useState(true);
+
+  useEffect(() => {
+    // Disable on touch devices or reduced motion preference
+    if (isReducedMotionPreferred() || isTouchDevice()) {
+      setEnabled(false);
+    }
+  }, []);
 
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (!divRef.current) return;
+    if (!enabled || !divRef.current) return;
     const rect = divRef.current.getBoundingClientRect();
     setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
-  const handleMouseEnter = () => setOpacity(1);
-  const handleMouseLeave = () => setOpacity(0);
+  const handleMouseEnter = () => enabled && setOpacity(1);
+  const handleMouseLeave = () => enabled && setOpacity(0);
 
   return (
     <div
@@ -36,24 +45,28 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`relative overflow-hidden ${className}`}
+      className={`spotlight-card ${className}`}
       style={{
         position: "relative",
+        overflow: "hidden",
         ...style,
       }}
       {...props}
     >
-      <div
-        style={{
-          pointerEvents: "none",
-          position: "absolute",
-          inset: 0,
-          opacity,
-          transition: "opacity 300ms ease",
-          background: `radial-gradient(${spotlightSize}px circle at ${position.x}px ${position.y}px, ${spotlightColor}, transparent 80%)`,
-          zIndex: 1,
-        }}
-      />
+      {enabled && (
+        <div
+          aria-hidden="true"
+          style={{
+            pointerEvents: "none",
+            position: "absolute",
+            inset: 0,
+            opacity,
+            transition: "opacity 200ms ease",
+            background: `radial-gradient(${spotlightSize}px circle at ${position.x}px ${position.y}px, ${spotlightColor}, transparent 80%)`,
+            zIndex: 1,
+          }}
+        />
+      )}
       <div style={{ position: "relative", zIndex: 2, height: "100%" }}>
         {children}
       </div>

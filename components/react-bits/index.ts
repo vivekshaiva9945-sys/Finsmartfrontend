@@ -1,8 +1,9 @@
-export { BlurText } from "./BlurText";
-export { AnimatedContent } from "./AnimatedContent";
-export { SpotlightCard } from "./SpotlightCard";
-export { CountUp } from "./CountUp";
-export { GlareHover } from "./GlareHover";
-export { ClickSpark } from "./ClickSpark";
-export { ShinyText } from "./ShinyText";
-export { Squares } from "./Squares";
+export * from "./AnimatedContent";
+export * from "./BlurText";
+export * from "./ClickSpark";
+export * from "./CountUp";
+export * from "./DotGrid";
+export * from "./GlareHover";
+export * from "./ShinyText";
+export * from "./SpotlightCard";
+export * from "./Squares";

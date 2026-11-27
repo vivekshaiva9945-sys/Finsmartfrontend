@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
+import { motionTokens, isReducedMotionPreferred } from "../../lib/motion";
 
 interface Spark {
   id: number;
@@ -24,18 +25,25 @@ interface ClickSparkProps {
 
 export const ClickSpark: React.FC<ClickSparkProps> = ({
   children,
-  sparkColor = "#10b981", // emerald
-  sparkCount = 10,
-  sparkRadius = 30,
-  duration = 450,
+  sparkColor = motionTokens.colors.emeraldSpark,
+  sparkCount = 5,
+  sparkRadius = 24,
+  duration = 350,
   className = "",
   style,
 }) => {
   const [sparks, setSparks] = useState<Spark[]>([]);
+  const [enabled, setEnabled] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (isReducedMotionPreferred()) {
+      setEnabled(false);
+    }
+  }, []);
+
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
+    if (!enabled || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
@@ -44,9 +52,9 @@ export const ClickSpark: React.FC<ClickSparkProps> = ({
       id: Date.now() + i,
       x: clickX,
       y: clickY,
-      angle: (i / sparkCount) * 360 + (Math.random() * 20 - 10),
-      distance: sparkRadius * (0.6 + Math.random() * 0.5),
-      size: 2.5 + Math.random() * 2,
+      angle: (i / sparkCount) * 360 + (Math.random() * 15 - 7.5),
+      distance: sparkRadius * (0.7 + Math.random() * 0.4),
+      size: 2 + Math.random() * 1.5,
       color: sparkColor,
     }));
 
@@ -61,8 +69,8 @@ export const ClickSpark: React.FC<ClickSparkProps> = ({
     <div
       ref={containerRef}
       onClick={handleClick}
-      className={`relative inline-block ${className}`}
-      style={{ position: "relative", ...style }}
+      className={`click-spark-container ${className}`}
+      style={{ position: "relative", display: "inline-block", ...style }}
     >
       {children}
       {sparks.map((spark) => {
@@ -73,6 +81,7 @@ export const ClickSpark: React.FC<ClickSparkProps> = ({
         return (
           <span
             key={spark.id}
+            aria-hidden="true"
             style={{
               position: "absolute",
               left: spark.x,
@@ -84,8 +93,8 @@ export const ClickSpark: React.FC<ClickSparkProps> = ({
               pointerEvents: "none",
               zIndex: 99,
               transform: "translate(-50%, -50%)",
-              animation: `sparkFade ${duration}ms cubic-bezier(0.25, 1, 0.5, 1) forwards`,
-              boxShadow: `0 0 6px ${spark.color}`,
+              animation: `sparkFade ${duration}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`,
+              boxShadow: `0 0 4px ${spark.color}`,
               "--spark-tx": `${targetX}px`,
               "--spark-ty": `${targetY}px`,
             } as React.CSSProperties}
