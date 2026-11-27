@@ -89,7 +89,7 @@ export const Button: React.FC<ButtonProps> = ({
         borderRadius: "var(--radius-md)",
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.6 : 1,
-        transition: "all 0.15s ease",
+        transition: "background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease",
         fontFamily: "inherit",
         ...getVariantStyles(),
         ...getSizeStyles(),
@@ -97,7 +97,7 @@ export const Button: React.FC<ButtonProps> = ({
       }}
       {...props}
     >
-      {icon && <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>}
+      {icon && <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>}
       {children}
     </button>
   );

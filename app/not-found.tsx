@@ -1,4 +1,10 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "404 - Page Not Found",
+  description: "The requested financial page or resource could not be found.",
+};
 
 export default function NotFound() {
   return (
@@ -89,7 +95,7 @@ export default function NotFound() {
             fontSize: "0.9375rem",
             textDecoration: "none",
             minHeight: "48px",
-            transition: "all 0.15s ease",
+            transition: "background-color 0.15s ease, color 0.15s ease",
           }}
         >
           Return to Dashboard

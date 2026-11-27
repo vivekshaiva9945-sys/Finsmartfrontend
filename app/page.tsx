@@ -148,21 +148,22 @@ export default function FinSmartApp() {
   };
 
   const navItems = [
-    { id: "dashboard", label: t(language, "navDashboard"), icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
-    { id: "budgets", label: t(language, "navBudgets"), icon: <PieChart className="w-4 h-4 flex-shrink-0" /> },
-    { id: "goals", label: t(language, "navGoals"), icon: <Target className="w-4 h-4 flex-shrink-0" /> },
-    { id: "schemes", label: t(language, "navSchemes"), icon: <Landmark className="w-4 h-4 flex-shrink-0" /> },
-    { id: "ai_assistant", label: t(language, "navAI"), icon: <Bot className="w-4 h-4 flex-shrink-0" /> },
-    { id: "calculators", label: t(language, "navCalculators"), icon: <Calculator className="w-4 h-4 flex-shrink-0" /> },
-    { id: "learning", label: t(language, "navLearn"), icon: <ShieldCheck className="w-4 h-4 flex-shrink-0" /> },
-    { id: "profile", label: t(language, "navProfile"), icon: <User className="w-4 h-4 flex-shrink-0" /> },
+    { id: "dashboard", label: t(language, "navDashboard"), icon: <LayoutDashboard aria-hidden="true" className="w-4 h-4 flex-shrink-0" /> },
+    { id: "budgets", label: t(language, "navBudgets"), icon: <PieChart aria-hidden="true" className="w-4 h-4 flex-shrink-0" /> },
+    { id: "goals", label: t(language, "navGoals"), icon: <Target aria-hidden="true" className="w-4 h-4 flex-shrink-0" /> },
+    { id: "schemes", label: t(language, "navSchemes"), icon: <Landmark aria-hidden="true" className="w-4 h-4 flex-shrink-0" /> },
+    { id: "ai_assistant", label: t(language, "navAI"), icon: <Bot aria-hidden="true" className="w-4 h-4 flex-shrink-0" /> },
+    { id: "calculators", label: t(language, "navCalculators"), icon: <Calculator aria-hidden="true" className="w-4 h-4 flex-shrink-0" /> },
+    { id: "learning", label: t(language, "navLearn"), icon: <ShieldCheck aria-hidden="true" className="w-4 h-4 flex-shrink-0" /> },
+    { id: "profile", label: t(language, "navProfile"), icon: <User aria-hidden="true" className="w-4 h-4 flex-shrink-0" /> },
     ...((session?.role === "college_admin" || session?.role === "admin")
-      ? [{ id: "admin", label: t(language, "navAdmin"), icon: <ShieldAlert className="w-4 h-4 flex-shrink-0" /> }]
+      ? [{ id: "admin", label: t(language, "navAdmin"), icon: <ShieldAlert aria-hidden="true" className="w-4 h-4 flex-shrink-0" /> }]
       : []),
   ];
 
   return (
     <div className="app-container">
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       {/* Top Header */}
       <header className="app-header">
         <div
@@ -216,13 +217,14 @@ export default function FinSmartApp() {
                 aria-label={mobileMenuOpen ? "Close menu" : "Open navigation menu"}
                 aria-expanded={mobileMenuOpen}
               >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                {mobileMenuOpen ? <X aria-hidden="true" className="w-5 h-5" /> : <Menu aria-hidden="true" className="w-5 h-5" />}
               </button>
             </div>
           )}
         </div>
       </header>
 
+      <main id="main-content">
       {/* Main Authentication Flow if not logged in */}
       {!session ? (
         <AuthView tenant={tenant} language={language} onLoginSuccess={handleLoginSuccess} />
@@ -327,6 +329,7 @@ export default function FinSmartApp() {
           )}
         </>
       )}
+      </main>
 
       {/* Comprehensive Production Footer */}
       <footer className="app-footer">
@@ -347,7 +350,7 @@ export default function FinSmartApp() {
             </p>
             <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px", fontSize: "0.85rem" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <Phone className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+                <Phone aria-hidden="true" className="w-4 h-4 text-emerald-700 flex-shrink-0" />
                 <span>
                   Citizen Helpline:{" "}
                   <a href="tel:+918023456789" className="contact-link" aria-label="Call Helpline">
@@ -356,7 +359,7 @@ export default function FinSmartApp() {
                 </span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <Mail className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+                <Mail aria-hidden="true" className="w-4 h-4 text-emerald-700 flex-shrink-0" />
                 <span>
                   Support & Grievance:{" "}
                   <a href="mailto:support@finsmart.gov.in" className="contact-link" aria-label="Email Support">
@@ -377,7 +380,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <LayoutDashboard className="w-4 h-4" /> Financial Dashboard
+              <LayoutDashboard aria-hidden="true" className="w-4 h-4" /> Financial Dashboard
             </button>
             <button
               type="button"
@@ -387,7 +390,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <PieChart className="w-4 h-4" /> Budget Planner & Alerts
+              <PieChart aria-hidden="true" className="w-4 h-4" /> Budget Planner & Alerts
             </button>
             <button
               type="button"
@@ -397,7 +400,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <Target className="w-4 h-4" /> Savings Goals Tracker
+              <Target aria-hidden="true" className="w-4 h-4" /> Savings Goals Tracker
             </button>
             <button
               type="button"
@@ -407,7 +410,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <Landmark className="w-4 h-4" /> Welfare Schemes Matcher
+              <Landmark aria-hidden="true" className="w-4 h-4" /> Welfare Schemes Matcher
             </button>
             <button
               type="button"
@@ -417,7 +420,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <Calculator className="w-4 h-4" /> Financial Calculators
+              <Calculator aria-hidden="true" className="w-4 h-4" /> Financial Calculators
             </button>
             <button
               type="button"
@@ -427,7 +430,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <ShieldCheck className="w-4 h-4" /> Fraud Shield & Literacy
+              <ShieldCheck aria-hidden="true" className="w-4 h-4" /> Fraud Shield & Literacy
             </button>
           </div>
 
@@ -441,7 +444,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <ShieldCheck className="w-4 h-4" /> India DPDP Act 2023 Consent
+              <ShieldCheck aria-hidden="true" className="w-4 h-4" /> India DPDP Act 2023 Consent
             </button>
             <button
               type="button"
@@ -451,7 +454,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <Download className="w-4 h-4" /> Right to Data Portability (DSAR)
+              <Download aria-hidden="true" className="w-4 h-4" /> Right to Data Portability (DSAR)
             </button>
             <button
               type="button"
@@ -461,7 +464,7 @@ export default function FinSmartApp() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <FileText className="w-4 h-4" /> RBI Financial Education Norms
+              <FileText aria-hidden="true" className="w-4 h-4" /> RBI Financial Education Norms
             </button>
             <a
               href="https://www.rbi.org.in"
@@ -469,7 +472,7 @@ export default function FinSmartApp() {
               rel="noopener noreferrer"
               className="footer-link"
             >
-              <ExternalLink className="w-4 h-4" /> Reserve Bank of India (RBI)
+              <ExternalLink aria-hidden="true" className="w-4 h-4" /> Reserve Bank of India (RBI)
             </a>
             <a
               href="https://scholarships.gov.in"
@@ -477,7 +480,7 @@ export default function FinSmartApp() {
               rel="noopener noreferrer"
               className="footer-link"
             >
-              <ExternalLink className="w-4 h-4" /> National Scholarship Portal
+              <ExternalLink aria-hidden="true" className="w-4 h-4" /> National Scholarship Portal
             </a>
           </div>
         </div>
@@ -580,7 +583,7 @@ function AuthView({
 
           {error && (
             <div className="alert-banner alert-danger" role="alert" style={{ marginBottom: "16px" }}>
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <AlertCircle aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
               <div>{error}</div>
             </div>
           )}
@@ -591,6 +594,8 @@ function AuthView({
                 <div className="form-group" style={{ marginBottom: "16px" }}>
                   <label className="form-label" style={{ fontWeight: 600, fontSize: "0.875rem", marginBottom: "6px" }}>{t(language, "fullName")}</label>
                   <input
+                    name="name"
+                    autoComplete="name"
                     required
                     className="fin-input"
                     style={{ minHeight: "44px" }}
@@ -602,7 +607,7 @@ function AuthView({
 
                 <div className="form-group" style={{ marginBottom: "16px" }}>
                   <label className="form-label" style={{ fontWeight: 600, fontSize: "0.875rem", marginBottom: "6px" }}>{t(language, "role")}</label>
-                  <select className="fin-input" style={{ minHeight: "44px" }} value={role} onChange={(e) => setRole(e.target.value)}>
+                  <select name="role" autoComplete="off" className="fin-input" style={{ minHeight: "44px" }} value={role} onChange={(e) => setRole(e.target.value)}>
                     <option value="student">{t(language, "student")}</option>
                     <option value="faculty">{t(language, "faculty")}</option>
                     <option value="admin">{t(language, "admin")}</option>
@@ -615,6 +620,9 @@ function AuthView({
               <label className="form-label" style={{ fontWeight: 600, fontSize: "0.875rem", marginBottom: "6px" }}>{t(language, "email")}</label>
               <input
                 type="email"
+                name="email"
+                autoComplete="email"
+                spellCheck={false}
                 required
                 className="fin-input"
                 style={{ minHeight: "44px" }}
@@ -628,6 +636,8 @@ function AuthView({
               <label className="form-label" style={{ fontWeight: 600, fontSize: "0.875rem", marginBottom: "6px" }}>{t(language, "password")}</label>
               <input
                 type="password"
+                name="password"
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
                 required
                 minLength={8}
                 className="fin-input"
@@ -666,11 +676,11 @@ function AuthView({
                 border: "1px solid var(--primary-dark)",
                 borderRadius: "var(--radius-md)",
                 cursor: loading ? "not-allowed" : "pointer",
-                transition: "all 0.15s ease",
+                transition: "background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease",
               }}
               disabled={loading}
             >
-              {loading ? "..." : mode === "login" ? t(language, "signInBtn") : t(language, "registerBtn")}
+              {loading ? "…" : mode === "login" ? t(language, "signInBtn") : t(language, "registerBtn")}
             </button>
 
             {mode === "login" && (
@@ -693,7 +703,7 @@ function AuthView({
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "6px",
-                    transition: "all 0.15s ease",
+                    transition: "background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease",
                   }}
                 >
                   Use Demo Account (vivekshaiva9945@gmail.com)
@@ -835,11 +845,17 @@ function DashboardView({ session, language }: { session: UserSession; language: 
       {/* Overspend Alert Banners */}
       {budgetAlerts.map((b) => (
         <div key={b.category} className={`alert-banner ${b.level === "over" ? "alert-danger" : "alert-warning"}`}>
-          ⚠️ <strong>Budget Alert:</strong> You have used {b.percent}% of your {b.category} budget ({formatINR(b.spent_minor)} of {formatINR(b.limit_minor)}).
+          <AlertTriangle aria-hidden="true" className="w-4 h-4 flex-shrink-0" style={{ display: "inline-block", marginRight: "6px" }} />
+          <strong>Budget Alert:</strong> You have used {b.percent}% of your {b.category} budget ({formatINR(b.spent_minor)} of {formatINR(b.limit_minor)}).
         </div>
       ))}
 
-      {error && <div className="alert-banner alert-danger">⚠️ {error}</div>}
+      {error && (
+        <div className="alert-banner alert-danger">
+          <AlertCircle aria-hidden="true" className="w-4 h-4 flex-shrink-0" style={{ display: "inline-block", marginRight: "6px" }} />
+          {error}
+        </div>
+      )}
 
       {/* 4-Metric Overview Cards with Staggered Entrance and CountUp */}
       <div className="stats-grid">
@@ -1032,8 +1048,8 @@ function DashboardView({ session, language }: { session: UserSession; language: 
                 }}
                 disabled={submitting}
               >
-                <PlusCircle className="w-5 h-5" />
-                {submitting ? "..." : t(language, "addTransactionBtn")}
+                <PlusCircle aria-hidden="true" className="w-5 h-5" />
+                {submitting ? "…" : t(language, "addTransactionBtn")}
               </button>
             </form>
           </div>
@@ -1089,11 +1105,10 @@ function DashboardView({ session, language }: { session: UserSession; language: 
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "1.2rem",
                     marginBottom: "10px",
                   }}
                 >
-                  📊
+                  <PieChart aria-hidden="true" className="w-5 h-5 text-emerald-700" />
                 </div>
                 <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", fontWeight: 500 }}>
                   {t(language, "noTransactions")}
@@ -1255,7 +1270,7 @@ function BudgetsView({ session, language }: { session: UserSession; language: La
           </div>
 
           <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? "..." : t(language, "saveBudgetBtn")}
+            {loading ? "…" : t(language, "saveBudgetBtn")}
           </button>
         </form>
       </div>
@@ -1480,7 +1495,7 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
           </div>
 
           <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? "..." : t(language, "setGoalBtn")}
+            {loading ? "…" : t(language, "setGoalBtn")}
           </button>
         </form>
       </div>
@@ -1523,7 +1538,7 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
 
                 {g.monthly_recommended_minor && !g.is_completed && (
                   <div style={{ fontSize: "0.78rem", color: "var(--primary)", marginTop: "6px" }}>
-                    💡 Save <strong>{formatINR(g.monthly_recommended_minor)}/month</strong> to reach goal by {g.target_date}.
+                    Save <strong>{formatINR(g.monthly_recommended_minor)}/month</strong> to reach goal by {g.target_date}.
                   </div>
                 )}
 
@@ -1532,7 +1547,8 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
                     <input
                       type="number"
                       step="1"
-                      placeholder="Amount ₹"
+                      placeholder="Amount ₹…"
+                      aria-label="Contribution amount in Rupees"
                       value={depositAmounts[g.id] || ""}
                       onChange={(e) => setDepositAmounts({ ...depositAmounts, [g.id]: e.target.value })}
                     />
@@ -1864,7 +1880,7 @@ function AIAssistantView({ session, language }: { session: UserSession; language
       <div className="chip-group">
         {samplePrompts.map((p, idx) => (
           <button key={idx} className="chip" onClick={() => handleSend(p)} style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-            <HelpCircle className="w-3.5 h-3.5 text-emerald-700" />
+            <HelpCircle aria-hidden="true" className="w-3.5 h-3.5 text-emerald-700" />
             {p}
           </button>
         ))}
@@ -1890,7 +1906,7 @@ function AIAssistantView({ session, language }: { session: UserSession; language
           ))}
           {loading && (
             <div className="chat-bubble bot">
-              <em>...</em>
+              <em>Thinking…</em>
             </div>
           )}
         </div>
@@ -1898,6 +1914,7 @@ function AIAssistantView({ session, language }: { session: UserSession; language
         {/* Input Bar */}
         <div className="chat-input-row">
           <input
+            aria-label={t(language, "askPlaceholder")}
             placeholder={t(language, "askPlaceholder")}
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -2176,7 +2193,7 @@ function LearningView({ language }: { language: Language }) {
           borderRadius: "var(--radius-md)",
         }}
       >
-        <ShieldAlert className="w-5 h-5 flex-shrink-0 text-amber-700 mt-0.5" />
+        <ShieldAlert aria-hidden="true" className="w-5 h-5 flex-shrink-0 text-amber-700 mt-0.5" />
         <div style={{ fontSize: "0.875rem", lineHeight: 1.5, color: "var(--color-warning)" }}>
           {t(language, "cyberAlert")}
         </div>
@@ -2184,7 +2201,7 @@ function LearningView({ language }: { language: Language }) {
 
       {error && (
         <div className="alert-banner alert-danger" style={{ marginBottom: "16px" }}>
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <AlertCircle aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
           <div>{error}</div>
         </div>
       )}
@@ -2212,7 +2229,10 @@ function LearningView({ language }: { language: Language }) {
               {/* Interactive Module Quiz */}
               {q && (
                 <div style={{ marginTop: "16px", padding: "14px", background: "white", borderRadius: "10px", border: "1px solid var(--border-light)" }}>
-                  <strong style={{ fontSize: "0.9rem" }}>🧠 Knowledge Check: {q.question}</strong>
+                  <strong style={{ fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <CheckCircle2 aria-hidden="true" className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+                    Knowledge Check: {q.question}
+                  </strong>
                   <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
                     {q.options.map((opt: string, optIdx: number) => (
                       <label key={optIdx} style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "0.88rem", cursor: "pointer" }}>
@@ -2233,7 +2253,7 @@ function LearningView({ language }: { language: Language }) {
                     </button>
                     {result && (
                       <span style={{ fontSize: "0.86rem", fontWeight: "700", color: result.is_correct ? "var(--color-success)" : "var(--color-danger)" }}>
-                        {result.is_correct ? "✓ Correct!" : "✗ Incorrect."} {result.explanation}
+                        {result.is_correct ? "Correct! " : "Incorrect. "} {result.explanation}
                       </span>
                     )}
                   </div>
@@ -2328,14 +2348,14 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
 
         {error && (
           <div className="alert-banner alert-danger" style={{ marginBottom: "16px" }}>
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <AlertCircle aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
             <div>{error}</div>
           </div>
         )}
 
         {msg && (
           <div className="alert-banner alert-success" style={{ marginBottom: "16px" }}>
-            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+            <CheckCircle2 aria-hidden="true" className="w-5 h-5 flex-shrink-0" />
             <div>{msg}</div>
           </div>
         )}
@@ -2384,7 +2404,7 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
           </div>
 
           <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? "..." : t(language, "updateProfileBtn")}
+            {saving ? "…" : t(language, "updateProfileBtn")}
           </button>
         </form>
       </div>
@@ -2434,7 +2454,7 @@ function AdminView({ session, language }: { session: UserSession; language: Lang
       <div className="card-header">
         <div>
           <div className="card-title" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Building2 className="w-5 h-5 text-emerald-700" />
+            <Building2 aria-hidden="true" className="w-5 h-5 text-emerald-700" />
             {t(language, "navAdmin")}
           </div>
           <div className="card-description">
@@ -2467,7 +2487,7 @@ function AdminView({ session, language }: { session: UserSession; language: Lang
           </div>
         </div>
       ) : (
-        <p>Loading analytics...</p>
+        <p>Loading analytics…</p>
       )}
     </div>
   );
