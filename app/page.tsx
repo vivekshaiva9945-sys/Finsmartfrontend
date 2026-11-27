@@ -130,6 +130,13 @@ export default function FinSmartApp() {
     metaDesc.setAttribute("content", activeDesc);
   }, [session, currentTab]);
 
+  // Synchronize document language for native Indic font rendering
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = language;
+    }
+  }, [language]);
+
   const handleLoginSuccess = (data: any, remember: boolean = true) => {
     const u = {
       token: data.access_token,
