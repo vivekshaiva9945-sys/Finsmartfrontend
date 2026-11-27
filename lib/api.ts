@@ -64,7 +64,9 @@ export function clearStoredAuth(): void {
     localStorage.removeItem("finsmart_user");
     sessionStorage.removeItem("finsmart_token");
     sessionStorage.removeItem("finsmart_user");
-    window.dispatchEvent(new Event("finsmart_auth_expired"));
+    if (typeof window.dispatchEvent === "function") {
+      window.dispatchEvent(new Event("finsmart_auth_expired"));
+    }
   }
 }
 
