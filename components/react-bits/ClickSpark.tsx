@@ -19,6 +19,7 @@ interface ClickSparkProps {
   sparkRadius?: number;
   duration?: number;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export const ClickSpark: React.FC<ClickSparkProps> = ({
@@ -28,6 +29,7 @@ export const ClickSpark: React.FC<ClickSparkProps> = ({
   sparkRadius = 30,
   duration = 450,
   className = "",
+  style,
 }) => {
   const [sparks, setSparks] = useState<Spark[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -60,7 +62,7 @@ export const ClickSpark: React.FC<ClickSparkProps> = ({
       ref={containerRef}
       onClick={handleClick}
       className={`relative inline-block ${className}`}
-      style={{ position: "relative" }}
+      style={{ position: "relative", ...style }}
     >
       {children}
       {sparks.map((spark) => {

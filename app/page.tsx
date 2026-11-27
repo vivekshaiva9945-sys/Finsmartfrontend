@@ -40,6 +40,7 @@ export default function FinSmartApp() {
   const [currentTab, setCurrentTab] = useState<Tab>("dashboard");
   const [tenant, setTenant] = useState<string>("public");
   const [language, setLanguage] = useState<Language>("en");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Initialize session and tenant from storage
   useEffect(() => {
@@ -58,6 +59,50 @@ export default function FinSmartApp() {
       }
     }
   }, []);
+
+  // Dynamic Title & Meta Description per Tab / Page
+  useEffect(() => {
+    const metaDescriptions: Record<string, string> = {
+      dashboard: "View real-time household cashflow, accounts balance, monthly expenses and savings rates.",
+      budgets: "Set strict monthly spending limits with proactive overspend warnings and daily allowances.",
+      goals: "Track goal-based savings milestones with target dates and recommended monthly allocations.",
+      schemes: "Discover Central & Karnataka welfare schemes and scholarships matching your profile criteria.",
+      ai_assistant: "Chat with FinSmart AI mentor for grounded financial literacy, budgeting tips, and fraud prevention.",
+      calculators: "Calculate loan EMI, mutual fund SIP compounding, and recommended emergency funds.",
+      learning: "Bilingual bite-sized modules on inflation, savings, cyber fraud shields, and interactive quizzes.",
+      profile: "Manage demographic details and exercise your DPDP Act 2023 data rights and portability.",
+      admin: "Aggregated, privacy-preserving institutional financial literacy metrics and compliance overview.",
+    };
+
+    const titles: Record<string, string> = {
+      dashboard: "FinSmart - Financial Health Dashboard",
+      budgets: "FinSmart - Budget Planner & Spending Limits",
+      goals: "FinSmart - Savings Goals Tracker",
+      schemes: "FinSmart - Welfare Schemes & Scholarships",
+      ai_assistant: "FinSmart - AI Financial Mentor & Advisor",
+      calculators: "FinSmart - Financial Calculators (EMI & SIP)",
+      learning: "FinSmart - Financial Literacy & Fraud Shield",
+      profile: "FinSmart - Profile & DPDP Privacy Center",
+      admin: "FinSmart - Institutional Analytics Console",
+    };
+
+    const activeTitle = session
+      ? titles[currentTab] || "FinSmart - Smart Financial Literacy & Budget Planner"
+      : "FinSmart - Secure Login & Account Access";
+    const activeDesc = session
+      ? metaDescriptions[currentTab] || "Smart financial literacy and budget planner for the public."
+      : "Sign in to FinSmart to track your household budget and explore government schemes.";
+
+    document.title = activeTitle;
+
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.setAttribute("name", "description");
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute("content", activeDesc);
+  }, [session, currentTab]);
 
   const handleLoginSuccess = (data: any) => {
     sessionStorage.setItem("finsmart_token", data.access_token);
@@ -80,11 +125,48 @@ export default function FinSmartApp() {
     setSession(null);
   };
 
+  const navItems = [
+    { id: "dashboard", label: t(language, "navDashboard"), icon: "📊" },
+    { id: "budgets", label: t(language, "navBudgets"), icon: "🎯" },
+    { id: "goals", label: t(language, "navGoals"), icon: "🏆" },
+    { id: "schemes", label: t(language, "navSchemes"), icon: "🏛️" },
+    {
+      id: "ai_assistant",
+      label: (
+        <ShinyText speed={3.5}>
+          ✨ {t(language, "navAI")}
+        </ShinyText>
+      ),
+      icon: "✨",
+    },
+    { id: "calculators", label: t(language, "navCalculators"), icon: "🧮" },
+    { id: "learning", label: t(language, "navLearn"), icon: "🛡️" },
+    { id: "profile", label: t(language, "navProfile"), icon: "👤" },
+    ...((session?.role === "college_admin" || session?.role === "admin")
+      ? [{ id: "admin", label: t(language, "navAdmin"), icon: "🏫" }]
+      : []),
+  ];
+
   return (
     <div className="app-container">
       {/* Top Header */}
       <header className="app-header">
-        <div className="brand-section">
+        <div
+          className="brand-section"
+          onClick={() => {
+            if (session) setCurrentTab("dashboard");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          style={{ cursor: "pointer", userSelect: "none" }}
+          role="button"
+          tabIndex={0}
+          aria-label="FinSmart Home"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              if (session) setCurrentTab("dashboard");
+            }
+          }}
+        >
           <div className="brand-logo">₹</div>
           <div>
             <div className="brand-title">FinSmart</div>
@@ -109,8 +191,18 @@ export default function FinSmartApp() {
               <span className="badge badge-agency">
                 {session.full_name} ({session.role})
               </span>
-              <button className="btn btn-secondary btn-sm" onClick={handleLogout}>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={handleLogout}>
                 {t(language, "signOut")}
+              </button>
+              {/* Mobile Menu Hamburger Toggle */}
+              <button
+                type="button"
+                className="mobile-nav-toggle"
+                onClick={() => setMobileMenuOpen((prev) => !prev)}
+                aria-label={mobileMenuOpen ? "Close menu" : "Open navigation menu"}
+                aria-expanded={mobileMenuOpen}
+              >
+                {mobileMenuOpen ? "✕" : "☰"}
               </button>
             </div>
           )}
@@ -122,9 +214,30 @@ export default function FinSmartApp() {
         <AuthView tenant={tenant} language={language} onLoginSuccess={handleLoginSuccess} />
       ) : (
         <>
-          {/* Navigation Bar with Framer Motion Sliding Pill & Overflow Safeguard */}
+          {/* Mobile Collapsible Navigation Drawer */}
+          <div className={`mobile-nav-drawer ${mobileMenuOpen ? "open" : ""}`}>
+            {navItems.map((tab) => {
+              const isActive = currentTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={`mobile-nav-btn ${isActive ? "active" : ""}`}
+                  onClick={() => {
+                    setCurrentTab(tab.id as Tab);
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <span style={{ fontSize: "1.1rem" }}>{tab.icon}</span>
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Desktop Navigation Bar with Framer Motion Sliding Pill & Overflow Safeguard */}
           <nav
-            className="nav-tabs"
+            className="nav-tabs desktop-nav-tabs"
             style={{
               position: "relative",
               display: "flex",
@@ -136,30 +249,12 @@ export default function FinSmartApp() {
               borderBottom: "1px solid var(--border-light)",
             }}
           >
-            {[
-              { id: "dashboard", label: t(language, "navDashboard") },
-              { id: "budgets", label: t(language, "navBudgets") },
-              { id: "goals", label: t(language, "navGoals") },
-              { id: "schemes", label: t(language, "navSchemes") },
-              {
-                id: "ai_assistant",
-                label: (
-                  <ShinyText speed={3.5}>
-                    ✨ {t(language, "navAI")}
-                  </ShinyText>
-                ),
-              },
-              { id: "calculators", label: t(language, "navCalculators") },
-              { id: "learning", label: t(language, "navLearn") },
-              { id: "profile", label: t(language, "navProfile") },
-              ...((session.role === "college_admin" || session.role === "admin")
-                ? [{ id: "admin", label: t(language, "navAdmin") }]
-                : []),
-            ].map((tab) => {
+            {navItems.map((tab) => {
               const isActive = currentTab === tab.id;
               return (
                 <button
                   key={tab.id}
+                  type="button"
                   className={`nav-tab-btn ${isActive ? "active" : ""}`}
                   onClick={() => setCurrentTab(tab.id as Tab)}
                   style={{
@@ -213,12 +308,162 @@ export default function FinSmartApp() {
         </>
       )}
 
-      {/* Footer & DPDP Compliance Note */}
+      {/* Comprehensive Production Footer */}
       <footer className="app-footer">
-        <p>FinSmart – {t(language, "brandSubtitle")}</p>
-        <p style={{ marginTop: "4px", fontSize: "0.78rem" }}>
-          India DPDP Act 2023 Compliant • RBI Financial Education Standards • Zero Speculative Investment Advice.
-        </p>
+        <div className="footer-grid">
+          <div className="footer-col">
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}
+              onClick={() => {
+                if (session) setCurrentTab("dashboard");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              <div className="brand-logo" style={{ width: "32px", height: "32px", fontSize: "16px" }}>₹</div>
+              <strong style={{ fontSize: "1.1rem", color: "var(--text-main)" }}>FinSmart</strong>
+            </div>
+            <p style={{ fontSize: "0.85rem", lineHeight: 1.6, marginTop: "6px" }}>
+              {t(language, "brandSubtitle")} — Empowering citizens, students, and households with transparent financial planning and government welfare discovery.
+            </p>
+            <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.85rem" }}>
+              <div>
+                📞 Citizen Helpline:{" "}
+                <a href="tel:+918023456789" className="contact-link" aria-label="Call Helpline">
+                  +91 (080) 2345-6789
+                </a>
+              </div>
+              <div>
+                ✉️ Support & Grievance:{" "}
+                <a href="mailto:support@finsmart.gov.in" className="contact-link" aria-label="Email Support">
+                  support@finsmart.gov.in
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="footer-col">
+            <div className="footer-title">Platform Features</div>
+            <button
+              type="button"
+              className="footer-link"
+              onClick={() => {
+                if (session) setCurrentTab("dashboard");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              📊 Financial Dashboard
+            </button>
+            <button
+              type="button"
+              className="footer-link"
+              onClick={() => {
+                if (session) setCurrentTab("budgets");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              🎯 Budget Planner & Alerts
+            </button>
+            <button
+              type="button"
+              className="footer-link"
+              onClick={() => {
+                if (session) setCurrentTab("goals");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              🏆 Savings Goals Tracker
+            </button>
+            <button
+              type="button"
+              className="footer-link"
+              onClick={() => {
+                if (session) setCurrentTab("schemes");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              🏛️ Welfare Schemes Matcher
+            </button>
+            <button
+              type="button"
+              className="footer-link"
+              onClick={() => {
+                if (session) setCurrentTab("calculators");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              🧮 EMI & SIP Calculators
+            </button>
+            <button
+              type="button"
+              className="footer-link"
+              onClick={() => {
+                if (session) setCurrentTab("learning");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              🛡️ Fraud Shield & Literacy
+            </button>
+          </div>
+
+          <div className="footer-col">
+            <div className="footer-title">Governance & Privacy</div>
+            <button
+              type="button"
+              className="footer-link"
+              onClick={() => {
+                if (session) setCurrentTab("profile");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              🔒 India DPDP Act 2023 Consent
+            </button>
+            <button
+              type="button"
+              className="footer-link"
+              onClick={() => {
+                if (session) setCurrentTab("profile");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              📥 Right to Data Portability (DSAR)
+            </button>
+            <button
+              type="button"
+              className="footer-link"
+              onClick={() => {
+                if (session) setCurrentTab("learning");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              📜 RBI Financial Education Norms
+            </button>
+            <a
+              href="https://www.rbi.org.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-link"
+            >
+              🌐 Reserve Bank of India (RBI) ↗
+            </a>
+            <a
+              href="https://scholarships.gov.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-link"
+            >
+              🎓 National Scholarship Portal ↗
+            </a>
+          </div>
+        </div>
+
+        <div className="footer-bottom">
+          <div>
+            © {new Date().getFullYear()} FinSmart. All rights reserved.
+          </div>
+          <div>
+            Zero Speculative Trading Advice • Built for Public Financial Literacy
+          </div>
+        </div>
       </footer>
     </div>
   );
@@ -484,6 +729,7 @@ function DashboardView({ session, language }: { session: UserSession; language: 
   const [budgetAlerts, setBudgetAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   // New Transaction Form State
   const [amountRupees, setAmountRupees] = useState("");
@@ -546,9 +792,12 @@ function DashboardView({ session, language }: { session: UserSession; language: 
       });
       setAmountRupees("");
       setDescription("");
+      setSuccessMsg("Transaction recorded successfully!");
+      setError("");
       await loadData();
     } catch (err: any) {
       setError(err.message || "Failed to record transaction.");
+      setSuccessMsg("");
     } finally {
       setSubmitting(false);
     }
@@ -558,9 +807,12 @@ function DashboardView({ session, language }: { session: UserSession; language: 
     if (confirm("Are you sure you want to delete this transaction?")) {
       try {
         await api(`/transactions/${id}`, { method: "DELETE" });
+        setSuccessMsg("Transaction deleted successfully.");
+        setError("");
         await loadData();
       } catch (err: any) {
-        alert(err.message || "Failed to delete.");
+        setError(err.message || "Failed to delete.");
+        setSuccessMsg("");
       }
     }
   };
@@ -575,6 +827,7 @@ function DashboardView({ session, language }: { session: UserSession; language: 
       ))}
 
       {error && <div className="alert-banner alert-danger">⚠️ {error}</div>}
+      {successMsg && <div className="alert-banner alert-success">✅ {successMsg}</div>}
 
       {/* 4-Metric Overview Cards with Staggered Entrance, Spotlight, and CountUp */}
       <div className="stats-grid">
@@ -880,6 +1133,8 @@ function BudgetsView({ session, language }: { session: UserSession; language: La
   const [category, setCategory] = useState("food");
   const [limitRupees, setLimitRupees] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const loadBudgets = useCallback(async () => {
     try {
@@ -898,20 +1153,24 @@ function BudgetsView({ session, language }: { session: UserSession; language: La
     e.preventDefault();
     const paise = toPaise(limitRupees);
     if (paise <= 0) {
-      alert("Please enter a valid monthly limit.");
+      setError("Please enter a valid monthly limit greater than ₹0.");
+      setSuccessMsg(null);
       return;
     }
 
     setLoading(true);
+    setError(null);
     try {
       await api("/budgets/", {
         method: "PUT",
         body: { category, limit_minor: paise, period: "MONTHLY" },
       });
       setLimitRupees("");
+      setSuccessMsg(`Monthly budget for ${category.toUpperCase()} updated successfully!`);
       await loadBudgets();
     } catch (err: any) {
-      alert(err.message || "Failed to save budget.");
+      setError(err.message || "Failed to save budget.");
+      setSuccessMsg(null);
     } finally {
       setLoading(false);
     }
@@ -923,6 +1182,9 @@ function BudgetsView({ session, language }: { session: UserSession; language: La
 
   return (
     <div>
+      {error && <div className="alert-banner alert-danger">⚠️ {error}</div>}
+      {successMsg && <div className="alert-banner alert-success">✅ {successMsg}</div>}
+
       <div className="card">
         <div className="card-header">
           <div>
@@ -1066,6 +1328,8 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
   const [category, setCategory] = useState("Emergency Fund");
   const [depositAmounts, setDepositAmounts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const loadGoals = useCallback(async () => {
     try {
@@ -1084,11 +1348,13 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
     e.preventDefault();
     const paise = toPaise(targetRupees);
     if (!name.trim() || paise <= 0) {
-      alert("Please provide a valid goal name and target amount.");
+      setError("Please provide a valid goal name and target amount.");
+      setSuccessMsg(null);
       return;
     }
 
     setLoading(true);
+    setError(null);
     try {
       await api("/goals/", {
         method: "POST",
@@ -1099,12 +1365,15 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
           category,
         },
       });
+      const createdName = name;
       setName("");
       setTargetRupees("");
       setTargetDate("");
+      setSuccessMsg(`Goal "${createdName}" created successfully!`);
       await loadGoals();
     } catch (err: any) {
-      alert(err.message || "Failed to create goal.");
+      setError(err.message || "Failed to create goal.");
+      setSuccessMsg(null);
     } finally {
       setLoading(false);
     }
@@ -1114,24 +1383,31 @@ function GoalsView({ session, language }: { session: UserSession; language: Lang
     const amtStr = depositAmounts[goalId];
     const paise = toPaise(amtStr);
     if (paise <= 0) {
-      alert("Please enter a contribution amount greater than ₹0.");
+      setError("Please enter a contribution amount greater than ₹0.");
+      setSuccessMsg(null);
       return;
     }
 
     try {
+      setError(null);
       await api(`/goals/${goalId}/contribute`, {
         method: "POST",
         body: { amount_minor: paise },
       });
       setDepositAmounts({ ...depositAmounts, [goalId]: "" });
+      setSuccessMsg("Contribution recorded successfully!");
       await loadGoals();
     } catch (err: any) {
-      alert(err.message || "Failed to contribute.");
+      setError(err.message || "Failed to contribute.");
+      setSuccessMsg(null);
     }
   };
 
   return (
     <div>
+      {error && <div className="alert-banner alert-danger">⚠️ {error}</div>}
+      {successMsg && <div className="alert-banner alert-success">✅ {successMsg}</div>}
+
       {/* Create New Goal Card */}
       <div className="card">
         <div className="card-header">
@@ -1269,9 +1545,11 @@ function SchemesView({ session, language }: { session: UserSession; language: La
   const [schemes, setSchemes] = useState<any[]>([]);
   const [evaluating, setEvaluating] = useState(false);
   const [expandedCode, setExpandedCode] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const runEvaluation = async () => {
     setEvaluating(true);
+    setError(null);
     try {
       const res = await api("/schemes/eligibility", {
         method: "POST",
@@ -1287,7 +1565,7 @@ function SchemesView({ session, language }: { session: UserSession; language: La
       });
       setSchemes(res);
     } catch (err: any) {
-      alert(err.message || "Failed to evaluate scheme eligibility.");
+      setError(err.message || "Failed to evaluate scheme eligibility.");
     } finally {
       setEvaluating(false);
     }
@@ -1299,6 +1577,8 @@ function SchemesView({ session, language }: { session: UserSession; language: La
 
   return (
     <div>
+      {error && <div className="alert-banner alert-danger">⚠️ {error}</div>}
+
       {/* Criteria Profiler Card */}
       <div className="card">
         <div className="card-header">
@@ -1636,40 +1916,44 @@ function CalculatorsView({ language }: { language: Language }) {
   const [expenses, setExpenses] = useState("15000");
   const [targetBuffer, setTargetBuffer] = useState("6");
   const [emergencyResult, setEmergencyResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const calculateEMI = async () => {
     try {
+      setError(null);
       const res = await api("/calc/emi", {
         method: "POST",
         body: { principal: parseFloat(principal), annual_rate: parseFloat(rate), months: parseInt(tenureMonths) },
       });
       setEmiResult(res);
     } catch (e: any) {
-      alert(e.message);
+      setError(e.message || "EMI calculation failed.");
     }
   };
 
   const calculateSIP = async () => {
     try {
+      setError(null);
       const res = await api("/calc/sip", {
         method: "POST",
         body: { monthly: parseFloat(sipMonthly), annual_rate: parseFloat(sipRate), months: parseInt(sipMonths) },
       });
       setSipResult(res);
     } catch (e: any) {
-      alert(e.message);
+      setError(e.message || "SIP calculation failed.");
     }
   };
 
   const calculateEmergency = async () => {
     try {
+      setError(null);
       const res = await api("/calc/emergency-fund", {
         method: "POST",
         body: { monthly_expenses: parseFloat(expenses), target_months: parseInt(targetBuffer) },
       });
       setEmergencyResult(res);
     } catch (e: any) {
-      alert(e.message);
+      setError(e.message || "Emergency fund calculation failed.");
     }
   };
 
@@ -1682,6 +1966,8 @@ function CalculatorsView({ language }: { language: Language }) {
             <div className="card-description">{t(language, "calcSubtitle")}</div>
           </div>
         </div>
+
+        {error && <div className="alert-banner alert-danger" style={{ marginBottom: "16px" }}>⚠️ {error}</div>}
 
         <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
           <button
@@ -1839,6 +2125,7 @@ function LearningView({ language }: { language: Language }) {
   const [modules, setModules] = useState<any[]>([]);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({});
   const [quizResults, setQuizResults] = useState<Record<number, any>>({});
+  const [quizError, setQuizError] = useState<string | null>(null);
 
   useEffect(() => {
     api(`/learning/?lang=${language}`).then(setModules).catch(console.error);
@@ -1847,10 +2134,11 @@ function LearningView({ language }: { language: Language }) {
   const handleQuizSubmit = async (moduleId: number) => {
     const selected = quizAnswers[moduleId];
     if (selected === undefined) {
-      alert("Please select an option before checking.");
+      setQuizError("Please select an option before checking your answer.");
       return;
     }
 
+    setQuizError(null);
     try {
       const res = await api("/learning/quiz/submit", {
         method: "POST",
@@ -1858,7 +2146,7 @@ function LearningView({ language }: { language: Language }) {
       });
       setQuizResults({ ...quizResults, [moduleId]: res });
     } catch (err: any) {
-      alert(err.message || "Failed to submit quiz.");
+      setQuizError(err.message || "Failed to submit quiz.");
     }
   };
 
@@ -1868,6 +2156,8 @@ function LearningView({ language }: { language: Language }) {
       <div className="alert-banner alert-warning" style={{ marginBottom: "20px" }}>
         {t(language, "cyberAlert")}
       </div>
+
+      {quizError && <div className="alert-banner alert-danger" style={{ marginBottom: "20px" }}>⚠️ {quizError}</div>}
 
       <div className="card">
         <div className="card-header">
@@ -1943,6 +2233,7 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
   const [consents, setConsents] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api("/profiles/").then((p) => p && setProfile(p)).catch(console.error);
@@ -1953,6 +2244,7 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
     e.preventDefault();
     setSaving(true);
     setMsg("");
+    setError(null);
     try {
       await api("/profiles/", {
         method: "PUT",
@@ -1960,7 +2252,7 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
       });
       setMsg("Profile saved successfully.");
     } catch (err: any) {
-      alert(err.message || "Failed to save profile.");
+      setError(err.message || "Failed to save profile.");
     } finally {
       setSaving(false);
     }
@@ -1968,6 +2260,7 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
 
   const handleDownloadDSAR = async () => {
     try {
+      setError(null);
       const data = await api("/profiles/dsar-export");
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -1975,19 +2268,20 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
       a.href = url;
       a.download = `finsmart_data_export_${session.user_id}.json`;
       a.click();
+      setMsg("Data export (DSAR) downloaded successfully.");
     } catch (err: any) {
-      alert(err.message || "Failed to export data.");
+      setError(err.message || "Failed to export data.");
     }
   };
 
   const handleErasure = async () => {
     if (confirm("WARNING: Right to be Forgotten (DPDP Act 2023). This will permanently delete your account, transactions, and profile. Proceed?")) {
       try {
+        setError(null);
         await api("/profiles/erasure", { method: "DELETE" });
-        alert("Your data has been erased. Signing out.");
         onLogout();
       } catch (err: any) {
-        alert(err.message || "Failed to erase data.");
+        setError(err.message || "Failed to erase data.");
       }
     }
   };
@@ -2002,6 +2296,7 @@ function ProfileView({ session, language, onLogout }: { session: UserSession; la
           </div>
         </div>
 
+        {error && <div className="alert-banner alert-danger">⚠️ {error}</div>}
         {msg && <div className="alert-banner alert-info">✓ {msg}</div>}
 
         <form onSubmit={handleSaveProfile}>
